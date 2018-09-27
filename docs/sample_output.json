@@ -1,0 +1,85 @@
+{
+  "node": {
+    "operators": {
+      "name": "Official ESGF Operators",
+      "success": {
+        "kwargs": {
+          "url": "https://aims2.llnl.gov/wps"
+        },
+        "logs": "log data",
+        "validations": [
+          {
+            "type": "check_process",
+            "kwargs": {
+              "pattern": ".*\\.aggregate",
+            },
+            "result": "success",
+          },
+          {
+            "type": "check_process",
+            "kwargs": {
+              "pattern": ".*\\.subset",
+            },
+            "result": "success",
+          }
+        ]
+      }
+    },
+    "datasets": {
+      "name": "Official ESGF Datasets",
+      "failure": {
+        "kwargs": { },
+        },
+        "logs": "log data",
+        "validations": [
+          {
+            "type": "access_data",
+            "kwargs": {
+              "url": "https://aims3.llnl.gov/thredds/test1.nc",
+            },
+            "result": "success"
+          },
+          {
+            "type": "access_data",
+            "kwargs": {
+              "url": "https://aims3.llnl.gov/thredds/test2.nc",
+            },
+            "result": "failure",
+          }
+        ]
+      }
+    },
+    "security": {
+      "name": "Security",
+    },
+    "metrics": {
+      "name": "Metrics",
+    },
+  },
+  "operator": {
+    "aggregate": [
+      {
+        "name": "benchmark",
+        "kwargs": {
+          "url": "https://aims2.llnl.gov/wps",
+        },
+        "validations": [
+          {
+            "type": "check_shape",
+            "kwargs": {
+              "url": "https://aims3.llnl.gov/thredds/test1.nc",
+              "shape": "(32, 143, 144)"
+            },
+            "result": "sucess",
+          }
+        ]
+      },
+      {
+        "name": "stress",
+      },
+      {
+        "name": "api_compliant",
+      },
+    ],
+  }
+}
