@@ -1,4 +1,5 @@
 import cStringIO
+import json
 import logging
 import multiprocessing
 import sys
@@ -16,9 +17,24 @@ def build_node_tests():
     node = [
         {
             'name': 'Official ESGF Operators',
-            'action_id': actions.HTTP_REQ_ACTION,
-            'validator_ids': [
-                validators.STATUS_CODE
+            'action': actions.HTTP_REQ_ACTION,
+            'validations': [
+                {
+                    'type': validators.WPS_CAPABILITIES,
+                    'kwargs': {
+                        'operations': [
+                            '.*\.idontexist',
+                            '.*\.aggregate',
+                            '.*\.average',
+                            '.*\.max',
+                            '.*\.metrics',
+                            '.*\.min',
+                            '.*\.regrid',
+                            '.*\.subset',
+                            '.*\.sum',
+                        ]
+                    }
+                },
             ],
             'args': [
                 'GET',
@@ -26,6 +42,10 @@ def build_node_tests():
             ],
             'kwargs': {
                 'verify': False,
+                'params': {
+                    'service': 'WPS',
+                    'request': 'GetCapabilities',
+                }
             },
         }
     ]
@@ -65,7 +85,7 @@ def node_test_unpack(kwargs):
     return node_test(**kwargs)
 
 
-def node_test(name, action_id, validator_ids, args=None, kwargs=None):
+def node_test(name, action, validations, args=None, kwargs=None):
     if args is None:
         args = []
 
@@ -74,19 +94,32 @@ def node_test(name, action_id, validator_ids, args=None, kwargs=None):
 
     failed = False
     validation_result = []
-    action = actions.REGISTRY[action_id]
+    act = actions.REGISTRY[action]
 
     with LogCapture() as capture:
-        act_result = action(*args, **kwargs)
+        act_result = act(*args, **kwargs)
 
-        for val in [validators.REGISTRY[x] for x in validator_ids]:
-            val_result = val(**act_result)
+        act_snapshot = {
+            'args': args,
+            'kwargs': kwargs,
+            'result': act_result,
+        }
+
+        for x in validations:
+            type_id = x['type']
+
+            val = validators.REGISTRY[type_id]
+
+            val_result = val(act_snapshot, **x.get('kwargs', {}))
+
+            if val_result['validation_result'] == validators.FAILURE:
+                failed = True
 
             validation_result.append(val_result)
 
         result = {
             'name': name,
-            'action': action_id,
+            'action': action,
             'logs': capture.value,
         }
 
@@ -109,12 +142,7 @@ def runner(**kwargs):
         while True:
             result = it.next()
 
-            logger.debug('Result %r', result)
-
-            status = 'Success' if 'success' in result else 'Failure'
-
-            logger.info('Test %r has completed with status %r', result['name'],
-                        status)
+            logger.info('%s', json.dumps(result, indent=2))
     except StopIteration:
         pass
     finally:
