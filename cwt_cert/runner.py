@@ -17,37 +17,32 @@ def build_node_tests():
     node = [
         {
             'name': 'Official ESGF Operators',
-            'action': {
-                'type': actions.HTTP_REQ_ACTION,
-                'args': [
-                    'GET',
-                    'https://192.168.39.34/wps/',
-                ],
-                'kwargs': {
-                    'verify': False,
-                    'params': {
-                        'service': 'WPS',
-                        'request': 'GetCapabilities',
-                    }
-                },
-            },
-            'validations': [
+            'actions': [
                 {
-                    'type': validators.WPS_CAPABILITIES,
-                    'kwargs': {
-                        'operations': [
-                            '.*\.aggregate',
-                            '.*\.average',
-                            '.*\.max',
-                            '.*\.metrics',
-                            '.*\.min',
-                            '.*\.regrid',
-                            '.*\.subset',
-                            '.*\.sum',
-                        ]
-                    }
+                    'type': actions.WPS_CAPABILITIES,
+                    'args': [
+                        'https://192.168.39.34/wps/',
+                    ],
+                    'validations': [
+                        {
+                            'type': validators.WPS_CAPABILITIES,
+                            'kwargs': {
+                                'operations': [
+                                    '.*\.aggregates',
+                                    '.*\.aggregate',
+                                    '.*\.average',
+                                    '.*\.max',
+                                    '.*\.metrics',
+                                    '.*\.min',
+                                    '.*\.regrid',
+                                    '.*\.subset',
+                                    '.*\.sum',
+                                ]
+                            }
+                        },
+                    ]
                 },
-            ],
+            ]
         }
     ]
 
@@ -86,7 +81,7 @@ def node_test_unpack(kwargs):
     return node_test(**kwargs)
 
 
-def run_action(type, args=None, kwargs=None):
+def run_action(type, args=None, kwargs=None, **extra):
     if args is None:
         args = []
 
@@ -100,7 +95,7 @@ def run_action(type, args=None, kwargs=None):
     return result
 
 
-def run_validation(output, type, args=None, kwargs=None):
+def run_validation(output, type, args=None, kwargs=None, **extra):
     if args is None:
         args = []
 
@@ -114,31 +109,39 @@ def run_validation(output, type, args=None, kwargs=None):
     return result
 
 
-def node_test(name, action, validations):
+def node_test(name, actions):
     with LogCapture() as capture:
-        act_result = run_action(**action)
+        results = {'name': name, 'actions': []}
 
-        action['result'] = act_result
+        test_status = validators.SUCCESS
 
-        result = {
-            'name': name,
-            'action': action,
-        }
+        for act in actions:
+            act_result = run_action(**act)
 
-        validation_results = []
+            # act['result'] = act_result
 
-        for val in validations:
-            val_result = run_validation(act_result, **val)
+            act_status = validators.SUCCESS
 
-            val['result'] = val_result
+            for val in act.get('validations'):
+                val_result = run_validation(act_result, **val)
 
-            validation_results.append(val)
+                val['result'] = val_result
 
-        result['validations'] = validation_results
+                if val_result['status'] == validators.FAILURE:
+                    act_status = validators.FAILURE
 
-        result['log'] = capture.value
+            if act_status == validators.FAILURE:
+                test_status = validators.FAILURE
 
-    return result
+            act['status'] = act_status
+
+            results['actions'].append(act)
+
+        results['status'] = test_status
+
+        results['log'] = capture.value
+
+    return results
 
 
 def runner(**kwargs):

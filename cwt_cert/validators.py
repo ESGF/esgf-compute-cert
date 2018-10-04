@@ -1,8 +1,9 @@
+import copy
 import logging
 import re
 from functools import partial
 
-from cwt.wps import wps
+import cwt
 
 logger = logging.getLogger('cwt_cert.validators')
 logger.setLevel(logging.DEBUG)
@@ -14,11 +15,15 @@ FAILURE = 'failure'
 
 
 def format_result(message, extra=None, status=None):
-    return {
+    result = {
         'status': status,
         'message': message,
-        'extra': extra,
     }
+
+    if extra is not None:
+        result['extra'] = extra
+
+    return result
 
 
 format_success = partial(format_result, status=SUCCESS)
@@ -28,51 +33,35 @@ format_failure = partial(format_result, status=FAILURE)
 
 
 def check_wps_capabilities(output, operations):
-    assert 'status_code' in output
-    assert 'text' in output
-
-    status_code = output['status_code']
-
-    if status_code >= 300:
-        msg = 'Expected status code less than 300, recieved {}'.format(
-            status_code)
+    if not isinstance(output, cwt.CapabilitiesWrapper):
+        msg = 'Expecting type {!r} got {!r}'.format(cwt.CapabilitiesWrapper,
+                                                    type(output))
 
         return format_failure(msg)
 
-    text = output['text']
+    identifiers = [x.identifier for x in output.processes]
 
-    item = wps.CreateFromDocument(text)
-
-    if item is None or not isinstance(item, wps.WPSCapabilitiesType):
-        msg = 'Did not recieve a WPS GetCapabilities response'
-
-        return format_failure(msg)
-
-    identifiers = [x.Identifier.value() for x in item.ProcessOfferings.Process]
-
-    operations_copy = [x for x in operations]
+    missing_ops = copy.deepcopy(operations)
 
     for x in identifiers:
-        for y in operations_copy:
+        for y in missing_ops:
             if re.match(y, x) is not None:
-                logger.info('Matched %r to %r', y, x)
-
                 break
 
-        operations_copy.remove(y)
+        missing_ops.remove(y)
 
-    if len(operations_copy) > 0:
-        msg = 'Missing operations matching the following: "{}"'.format(
-            ', '.join(operations_copy))
+    if len(missing_ops) > 0:
+        missing = ', '.join(missing_ops)
 
-        return format_failure(msg)
+        msg = 'Missing operations matching {!r}'.format(missing)
 
-    extra = {
-        'operations': identifiers,
-    }
+        extra = {
+            'operations': identifiers,
+        }
 
-    return format_success('Successfully identifier all required operations',
-                          extra)
+        return format_failure(msg, extra=extra)
+
+    return format_success('Successfully identifier all required operators')
 
 
 REGISTRY = {

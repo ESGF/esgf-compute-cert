@@ -1,26 +1,21 @@
 import logging
 
-import requests
+import cwt
 
 logging.getLogger('urllib3').setLevel(logging.DEBUG)
 
 logger = logging.getLogger('cwt_cert.actions')
 logger.setLevel(logging.DEBUG)
 
-HTTP_REQ_ACTION = 'http_req_action'
+WPS_CAPABILITIES = 'wps_capabilities_action'
 
 
-def http_request_action(*args, **kwargs):
-    response = requests.request(*args, **kwargs)
+def wps_capabilities_action(*args, **kwargs):
+    client = cwt.WPSClient(args[0], verify=False)
 
-    result = {
-        'status_code': response.status_code,
-        'text': response.text,
-    }
-
-    return result
+    return client.get_capabilities()
 
 
 REGISTRY = {
-    HTTP_REQ_ACTION: http_request_action,
+    WPS_CAPABILITIES: wps_capabilities_action,
 }
