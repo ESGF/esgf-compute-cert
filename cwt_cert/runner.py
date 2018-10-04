@@ -17,13 +17,25 @@ def build_node_tests():
     node = [
         {
             'name': 'Official ESGF Operators',
-            'action': actions.HTTP_REQ_ACTION,
+            'action': {
+                'type': actions.HTTP_REQ_ACTION,
+                'args': [
+                    'GET',
+                    'https://192.168.39.34/wps/',
+                ],
+                'kwargs': {
+                    'verify': False,
+                    'params': {
+                        'service': 'WPS',
+                        'request': 'GetCapabilities',
+                    }
+                },
+            },
             'validations': [
                 {
                     'type': validators.WPS_CAPABILITIES,
                     'kwargs': {
                         'operations': [
-                            '.*\.idontexist',
                             '.*\.aggregate',
                             '.*\.average',
                             '.*\.max',
@@ -36,17 +48,6 @@ def build_node_tests():
                     }
                 },
             ],
-            'args': [
-                'GET',
-                'https://192.168.39.34/wps/',
-            ],
-            'kwargs': {
-                'verify': False,
-                'params': {
-                    'service': 'WPS',
-                    'request': 'GetCapabilities',
-                }
-            },
         }
     ]
 
@@ -85,48 +86,57 @@ def node_test_unpack(kwargs):
     return node_test(**kwargs)
 
 
-def node_test(name, action, validations, args=None, kwargs=None):
+def run_action(type, args=None, kwargs=None):
     if args is None:
         args = []
 
     if kwargs is None:
         kwargs = {}
 
-    failed = False
-    validation_result = []
-    act = actions.REGISTRY[action]
+    action = actions.REGISTRY[type]
 
+    result = action(*args, **kwargs)
+
+    return result
+
+
+def run_validation(output, type, args=None, kwargs=None):
+    if args is None:
+        args = []
+
+    if kwargs is None:
+        kwargs = {}
+
+    validator = validators.REGISTRY[type]
+
+    result = validator(output, *args, **kwargs)
+
+    return result
+
+
+def node_test(name, action, validations):
     with LogCapture() as capture:
-        act_result = act(*args, **kwargs)
+        act_result = run_action(**action)
 
-        act_snapshot = {
-            'args': args,
-            'kwargs': kwargs,
-            'result': act_result,
-        }
-
-        for x in validations:
-            type_id = x['type']
-
-            val = validators.REGISTRY[type_id]
-
-            val_result = val(act_snapshot, **x.get('kwargs', {}))
-
-            if val_result['validation_result'] == validators.FAILURE:
-                failed = True
-
-            validation_result.append(val_result)
+        action['result'] = act_result
 
         result = {
             'name': name,
             'action': action,
-            'logs': capture.value,
         }
 
-    if failed:
-        result['failure'] = validation_result
-    else:
-        result['success'] = validation_result
+        validation_results = []
+
+        for val in validations:
+            val_result = run_validation(act_result, **val)
+
+            val['result'] = val_result
+
+            validation_results.append(val)
+
+        result['validations'] = validation_results
+
+        result['log'] = capture.value
 
     return result
 
