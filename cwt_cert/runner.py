@@ -4,6 +4,7 @@ import logging
 import multiprocessing
 import sys
 
+import cwt
 from cwt_cert import actions
 from cwt_cert import validators
 
@@ -11,6 +12,86 @@ logger = logging.getLogger('cwt_cert.runner')
 
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler(sys.stdout))
+
+
+def default(x):
+    if isinstance(x, cwt.Variable):
+        data = x.parameterize()
+
+        data['_type'] = 'variable'
+    elif isinstance(x, cwt.Domain):
+        data = x.parameterize()
+
+        data['_type'] = 'domain'
+    else:
+        raise TypeError(type(x))
+
+    return data
+
+
+def object_hook(x):
+    if '_type' in x:
+        type = x.pop('_type')
+
+        if type == 'variable':
+            x = cwt.Variable.from_dict(x)
+        elif type == 'domain':
+            x = cwt.Domain.from_dict(x)
+
+    return x
+
+
+def json_encoder(x, **kwargs):
+    return json.dumps(x, default=default, **kwargs)
+
+
+def json_decoder(x):
+    return json.loads(x, object_hook=object_hook)
+
+
+def build_operator_tests():
+    operator = [
+        {
+            'name': 'Operator aggregate',
+            'actions': [
+                {
+                    'type': actions.WPS_EXECUTE,
+                    'args': [
+                        'https://192.168.39.34/wps/',
+                    ],
+                    'kwargs': {
+                        'inputs': [
+                            cwt.Variable('https://dataserver.nccs.nasa.gov/thredds/dodsC/CMIP5/NASA/GISS/historical/E2-H_historical_r2i1p3/ccb_Amon_GISS-E2-H_historical_r2i1p3_185001-190012.nc',  # noqa E501
+                                         'ccb'),
+                            cwt.Variable('https://dataserver.nccs.nasa.gov/thredds/dodsC/CMIP5/NASA/GISS/historical/E2-H_historical_r2i1p3/ccb_Amon_GISS-E2-H_historical_r2i1p3_190101-195012.nc',  # noqa E501
+                                         'ccb'),
+                            cwt.Variable('https://dataserver.nccs.nasa.gov/thredds/dodsC/CMIP5/NASA/GISS/historical/E2-H_historical_r2i1p3/ccb_Amon_GISS-E2-H_historical_r2i1p3_195101-200512.nc',  # noqa E501
+                                         'ccb'),
+                        ],
+                        'identifier': '.*\.aggregate',
+                        'variable': 'ccb',
+                    },
+                    'validations': [
+                        {
+                            'type': validators.CHECK_VARIABLE,
+                            'kwargs': {
+                                'var_name': 'ccb',
+                            }
+                        },
+                        {
+                            'type': validators.CHECK_SHAPE,
+                            'kwargs': {
+                                'var_name': 'ccb',
+                                'shape': (1869, 90, 144),
+                            },
+                        },
+                    ],
+                },
+            ],
+        }
+    ]
+
+    return operator
 
 
 def build_node_tests():
@@ -28,7 +109,6 @@ def build_node_tests():
                             'type': validators.WPS_CAPABILITIES,
                             'kwargs': {
                                 'operations': [
-                                    '.*\.aggregates',
                                     '.*\.aggregate',
                                     '.*\.average',
                                     '.*\.max',
@@ -118,8 +198,6 @@ def node_test(name, actions):
         for act in actions:
             act_result = run_action(**act)
 
-            # act['result'] = act_result
-
             act_status = validators.SUCCESS
 
             for val in act.get('validations'):
@@ -145,18 +223,21 @@ def node_test(name, actions):
 
 
 def runner(**kwargs):
-    node_tests = build_node_tests()
-
     pool = multiprocessing.Pool(5)
 
-    it = pool.imap(node_test_unpack, node_tests)
+    operator_tests = build_operator_tests()
 
-    try:
-        while True:
-            result = it.next()
+    for test in operator_tests:
+        print json_encoder(test, indent=2)
 
-            logger.info('%s', json.dumps(result, indent=2))
-    except StopIteration:
-        pass
-    finally:
-        pool.close()
+    # node_tests = build_node_tests()
+
+    # pool = multiprocessing.Pool(5)
+
+    # result = pool.map_async(node_test_unpack, node_tests)
+
+    # data = result.get()
+
+    # logger.info('%s', json.dumps(data, indent=2))
+
+    pool.close()

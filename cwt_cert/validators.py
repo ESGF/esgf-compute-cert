@@ -9,6 +9,8 @@ logger = logging.getLogger('cwt_cert.validators')
 logger.setLevel(logging.DEBUG)
 
 WPS_CAPABILITIES = 'wps_capabilities'
+CHECK_VARIABLE = 'check_variable'
+CHECK_SHAPE = 'check_shape'
 
 SUCCESS = 'success'
 FAILURE = 'failure'
@@ -30,6 +32,14 @@ format_success = partial(format_result, status=SUCCESS)
 
 
 format_failure = partial(format_result, status=FAILURE)
+
+
+def check_variable(output, variable_name):
+    return None
+
+
+def check_shape(output, variable_name, shape):
+    return None
 
 
 def check_wps_capabilities(output, operations):
@@ -66,4 +76,6 @@ def check_wps_capabilities(output, operations):
 
 REGISTRY = {
     WPS_CAPABILITIES: check_wps_capabilities,
+    CHECK_VARIABLE: check_variable,
+    CHECK_SHAPE: check_shape,
 }
