@@ -14,6 +14,7 @@ def cwt_cert():
 @cwt_cert.command()
 @click.argument('url')
 @click.option('--output', help='A path to output the results.')
+@click.option('--api-key', help='The CWT WPS api key.')
 def main(**kwargs):
     cli = CLI()
 
