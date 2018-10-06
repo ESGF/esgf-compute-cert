@@ -49,7 +49,7 @@ def json_decoder(x):
     return json.loads(x, object_hook=object_hook)
 
 
-def build_operator_tests():
+def build_operator_tests(url, **kwargs):
     operator = [
         {
             'name': 'Operator aggregate',
@@ -57,7 +57,7 @@ def build_operator_tests():
                 {
                     'type': actions.WPS_EXECUTE,
                     'args': [
-                        'https://192.168.39.34/wps/',
+                        url,
                     ],
                     'kwargs': {
                         'inputs': [
@@ -94,7 +94,7 @@ def build_operator_tests():
     return operator
 
 
-def build_node_tests():
+def build_node_tests(url, **kwargs):
     node = [
         {
             'name': 'Official ESGF Operators',
@@ -102,7 +102,7 @@ def build_node_tests():
                 {
                     'type': actions.WPS_CAPABILITIES,
                     'args': [
-                        'https://192.168.39.34/wps/',
+                        url,
                     ],
                     'validations': [
                         {
@@ -225,10 +225,12 @@ def node_test(name, actions):
 def runner(**kwargs):
     pool = multiprocessing.Pool(5)
 
-    operator_tests = build_operator_tests()
+    operator_tests = build_operator_tests(**kwargs)
 
     for test in operator_tests:
-        print json_encoder(test, indent=2)
+        result = node_test(**test)
+
+        print json_encoder(result, indent=2)
 
     # node_tests = build_node_tests()
 
