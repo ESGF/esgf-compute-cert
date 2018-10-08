@@ -14,6 +14,10 @@ logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
+class CertificationError(Exception):
+    pass
+
+
 def default(x):
     if isinstance(x, cwt.Variable):
         data = x.parameterize()
@@ -138,7 +142,8 @@ class LogCapture(object):
     def __enter__(self):
         self.buffer = cStringIO.StringIO()
 
-        self.handler = logging.StreamHandler(self.buffer)
+        #self.handler = logging.StreamHandler(self.buffer)
+        self.handler = logging.StreamHandler(sys.stdout)
 
         formatter = logging.Formatter(
             '%(asctime)s [[%(module)s.%(funcName)s] %(levelname)s]: '
@@ -169,7 +174,10 @@ def run_action(type, args=None, kwargs=None, **extra):
     if kwargs is None:
         kwargs = {}
 
-    action = actions.REGISTRY[type]
+    try:
+        action = actions.REGISTRY[type]
+    except KeyError:
+        raise CertificationError('Missing action {!r}'.format(type))
 
     result = action(*args, **kwargs)
 
@@ -183,44 +191,60 @@ def run_validation(output, type, args=None, kwargs=None, **extra):
     if kwargs is None:
         kwargs = {}
 
-    validator = validators.REGISTRY[type]
+    try:
+        validator = validators.REGISTRY[type]
+    except KeyError:
+        raise CertificationError('Missing validator {!r}'.format(type))
 
     result = validator(output, *args, **kwargs)
 
     return result
 
 
-def node_test(name, actions):
+def run_validations(output, validations, **kwargs):
+    status = validators.SUCCESS
+
+    for item in validations:
+        try:
+            result = run_validation(output, **item)
+        except Exception as e:
+            status = validators.FAILURE
+        else:
+            item['result'] = result
+
+            if result['status'] == validators.FAILURE:
+                status = result['status']
+
+    return status
+
+def run_test(name, actions):
     with LogCapture() as capture:
-        results = {'name': name, 'actions': []}
+        result = {'name': name, 'actions': []}
 
-        test_status = validators.SUCCESS
+        status = validators.SUCCESS
 
-        for act in actions:
-            act_result = run_action(**act)
+        for item in actions:
+            action_status = validators.SUCCESS
 
-            act_status = validators.SUCCESS
+            try:
+                action_result = run_action(**item)
+            except Exception as e:
+                action_status = validators.FAILURE
+            else:
+                action_status = run_validations(action_result, **item)
 
-            for val in act.get('validations'):
-                val_result = run_validation(act_result, **val)
+            if action_status == validators.FAILURE:
+                status = action_status
 
-                val['result'] = val_result
+            item['status'] = action_status
 
-                if val_result['status'] == validators.FAILURE:
-                    act_status = validators.FAILURE
+            result['actions'].append(item)
 
-            if act_status == validators.FAILURE:
-                test_status = validators.FAILURE
+        result['status'] = status
 
-            act['status'] = act_status
+        result['log'] = capture.value
 
-            results['actions'].append(act)
-
-        results['status'] = test_status
-
-        results['log'] = capture.value
-
-    return results
+    return result
 
 
 def runner(**kwargs):
@@ -229,9 +253,9 @@ def runner(**kwargs):
     operator_tests = build_operator_tests(**kwargs)
 
     for test in operator_tests:
-        result = node_test(**test)
+        result = run_test(**test)
 
-        print json_encoder(result, indent=2)
+    #    print json_encoder(result, indent=2)
 
     # node_tests = build_node_tests()
 
