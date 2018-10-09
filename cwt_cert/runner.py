@@ -228,12 +228,12 @@ def run_test(name, actions):
             else:
                 action_status = run_validations(action_result, **item)
 
-            if action_status == validators.FAILURE:
-                status = action_status
-
             item['status'] = action_status
 
             result['actions'].append(item)
+
+            if action_status == validators.FAILURE:
+                status = action_status
 
         result['status'] = status
 
