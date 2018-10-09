@@ -78,15 +78,8 @@ def build_operator_tests(url, api_key, **kwargs):
                     },
                     'validations': [
                         {
-                            'type': validators.CHECK_VARIABLE,
-                            'kwargs': {
-                                'var_name': 'ccb',
-                            }
-                        },
-                        {
                             'type': validators.CHECK_SHAPE,
                             'kwargs': {
-                                'var_name': 'ccb',
                                 'shape': (1869, 90, 144),
                             },
                         },
@@ -142,8 +135,7 @@ class LogCapture(object):
     def __enter__(self):
         self.buffer = cStringIO.StringIO()
 
-        #self.handler = logging.StreamHandler(self.buffer)
-        self.handler = logging.StreamHandler(sys.stdout)
+        self.handler = logging.StreamHandler(self.buffer)
 
         formatter = logging.Formatter(
             '%(asctime)s [[%(module)s.%(funcName)s] %(levelname)s]: '
@@ -209,8 +201,10 @@ def run_validations(output, validations, **kwargs):
             result = run_validation(output, **item)
         except Exception as e:
             status = validators.FAILURE
+
+            item['status'] = status
         else:
-            item['result'] = result
+            item.update(result)
 
             if result['status'] == validators.FAILURE:
                 status = result['status']
@@ -255,7 +249,7 @@ def runner(**kwargs):
     for test in operator_tests:
         result = run_test(**test)
 
-    #    print json_encoder(result, indent=2)
+        print json_encoder(result, indent=2)
 
     # node_tests = build_node_tests()
 

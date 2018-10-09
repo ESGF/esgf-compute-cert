@@ -9,17 +9,16 @@ logger = logging.getLogger('cwt_cert.validators')
 logger.setLevel(logging.DEBUG)
 
 WPS_CAPABILITIES = 'wps_capabilities'
-CHECK_VARIABLE = 'check_variable'
 CHECK_SHAPE = 'check_shape'
 
 SUCCESS = 'success'
 FAILURE = 'failure'
 
 
-def format_result(message, extra=None, status=None):
+def format_result(message, extra=None, status=None, *args):
     result = {
         'status': status,
-        'message': message,
+        'message': message.format(args),
     }
 
     if extra is not None:
@@ -34,13 +33,26 @@ format_success = partial(format_result, status=SUCCESS)
 format_failure = partial(format_result, status=FAILURE)
 
 
-def check_variable(output, variable_name):
-    return None
+def check_shape(output, shape):
+    try:
+        f = cdms2.open(output.uri)
 
+        try:
+            var_shape = f[output.var_name].shape
+        except AttributeError:
+            return format_failure('Variable {!r} was not found in {!r}',
+                                  output.var_name, output.uri)
 
-def check_shape(output, variable_name, shape):
-    return None
+        if var_shape != shape:
+            return format_failure('Outputs shape {!r} does not match the'
+                                  'expected shape {!r}', var_shape, shape)
+    except cdms2.CDMSError as e:
+        return format_failure('Failed to open {!r}', output.uri)
+    finally:
+        f.close()
 
+    return format_success('Verified variable {!r} shape is {!r}',
+                          output.var_name, shape)
 
 def check_wps_capabilities(output, operations):
     if not isinstance(output, cwt.CapabilitiesWrapper):
@@ -76,6 +88,5 @@ def check_wps_capabilities(output, operations):
 
 REGISTRY = {
     WPS_CAPABILITIES: check_wps_capabilities,
-    CHECK_VARIABLE: check_variable,
     CHECK_SHAPE: check_shape,
 }
