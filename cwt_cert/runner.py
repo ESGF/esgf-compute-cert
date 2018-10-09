@@ -201,7 +201,11 @@ def run_validations(output, validations, **kwargs):
         try:
             result = run_validation(output, **item)
         except Exception as e:
+            logger.exception('Validation failed')
+
             status = validators.FAILURE
+
+            item['message'] = str(e)
 
             item['status'] = status
         else:
@@ -224,7 +228,7 @@ def run_test(name, actions):
             try:
                 action_result = run_action(**item)
             except Exception as e:
-                item['reason'] = str(e)
+                item['message'] = str(e)
                 
                 action_status = validators.FAILURE
             else:

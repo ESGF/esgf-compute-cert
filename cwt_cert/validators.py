@@ -3,6 +3,7 @@ import logging
 import re
 from functools import partial
 
+import cdms2
 import cwt
 
 logger = logging.getLogger('cwt_cert.validators')
@@ -15,14 +16,13 @@ SUCCESS = 'success'
 FAILURE = 'failure'
 
 
-def format_result(message, extra=None, status=None, *args):
+def format_result(message, *args, **kwargs):
+    status = kwargs.pop('status')
+
     result = {
         'status': status,
-        'message': message.format(args),
+        'message': message.format(*args),
     }
-
-    if extra is not None:
-        result['extra'] = extra
 
     return result
 
@@ -34,8 +34,14 @@ format_failure = partial(format_result, status=FAILURE)
 
 
 def check_shape(output, shape):
+    f = None
+
+    logger.info('Opening %r', output.uri)
+
     try:
         f = cdms2.open(output.uri)
+
+        logger.info('Reading shape of variable %r', output.var_name)
 
         try:
             var_shape = f[output.var_name].shape
@@ -43,13 +49,16 @@ def check_shape(output, shape):
             return format_failure('Variable {!r} was not found in {!r}',
                                   output.var_name, output.uri)
 
+        logger.info('Read shape of %r', var_shape) 
+
         if var_shape != shape:
             return format_failure('Outputs shape {!r} does not match the'
                                   'expected shape {!r}', var_shape, shape)
     except cdms2.CDMSError as e:
         return format_failure('Failed to open {!r}', output.uri)
     finally:
-        f.close()
+        if f is not None:
+            f.close()
 
     return format_success('Verified variable {!r} shape is {!r}',
                           output.var_name, shape)
