@@ -3,6 +3,7 @@ import json
 import logging
 import multiprocessing
 import sys
+import time
 
 import cwt
 from cwt_cert import actions
@@ -156,10 +157,6 @@ class LogCapture(object):
         self.logger.removeHandler(self.handler)
 
 
-def node_test_unpack(kwargs):
-    return node_test(**kwargs)
-
-
 def run_action(type, args=None, kwargs=None, **extra):
     if args is None:
         args = []
@@ -248,24 +245,30 @@ def run_test(name, actions):
     return result
 
 
+def run_test_unpack(kwargs):
+    return run_test(**kwargs)
+
+
 def runner(**kwargs):
+    results = {'node': [], 'operator': []}
+
     pool = multiprocessing.Pool(5)
+
+    node_tests = build_node_tests(**kwargs)
+
+    async_result = pool.map_async(run_test_unpack, node_tests)
+
+    data = async_result.get(120)
+
+    results['node'] = data
 
     operator_tests = build_operator_tests(**kwargs)
 
     for test in operator_tests:
-        result = run_test(**test)
-
-        print json_encoder(result, indent=2)
-
-    # node_tests = build_node_tests()
-
-    # pool = multiprocessing.Pool(5)
-
-    # result = pool.map_async(node_test_unpack, node_tests)
-
-    # data = result.get()
-
-    # logger.info('%s', json.dumps(data, indent=2))
+        test_result = pool.map(run_test_unpack, [test])
+   
+        results['operator'].append(test_result)
 
     pool.close()
+
+    return results
