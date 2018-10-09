@@ -46,6 +46,10 @@ def object_hook(x):
     return x
 
 
+def json_encoder_to_file(x, fp, **kwargs):
+    return json.dump(x, fp, default=default, **kwargs)
+
+
 def json_encoder(x, **kwargs):
     return json.dumps(x, default=default, **kwargs)
 
@@ -136,8 +140,7 @@ class LogCapture(object):
     def __enter__(self):
         self.buffer = cStringIO.StringIO()
 
-        self.handler = logging.StreamHandler(sys.stdout)
-        #self.handler = logging.StreamHandler(self.buffer)
+        self.handler = logging.StreamHandler(self.buffer)
 
         formatter = logging.Formatter(
             '%(asctime)s [[%(module)s.%(funcName)s] %(levelname)s]: '
@@ -270,5 +273,9 @@ def runner(**kwargs):
         results['operator'].append(test_result)
 
     pool.close()
+
+    if kwargs['output'] is not None:
+        with open(kwargs['output'], 'w') as outfile:
+            json_encoder_to_file(results, outfile, indent=2)
 
     return results
