@@ -49,12 +49,12 @@ def check_shape(output, shape):
             return format_failure('Variable {!r} was not found in {!r}',
                                   output.var_name, output.uri)
 
-        logger.info('Read shape of %r', var_shape) 
+        logger.info('Read shape of %r', var_shape)
 
         if var_shape != shape:
             return format_failure('Outputs shape {!r} does not match the'
-                                  'expected shape {!r}', var_shape, shape)
-    except cdms2.CDMSError as e:
+                                  ' expected shape {!r}', var_shape, shape)
+    except cdms2.CDMSError:
         return format_failure('Failed to open {!r}', output.uri)
     finally:
         if f is not None:
@@ -62,6 +62,7 @@ def check_shape(output, shape):
 
     return format_success('Verified variable {!r} shape is {!r}',
                           output.var_name, shape)
+
 
 def check_wps_capabilities(output, operations):
     if not isinstance(output, cwt.CapabilitiesWrapper):
@@ -86,11 +87,7 @@ def check_wps_capabilities(output, operations):
 
         msg = 'Missing operations matching {!r}'.format(missing)
 
-        extra = {
-            'operations': identifiers,
-        }
-
-        return format_failure(msg, extra=extra)
+        return format_failure(msg)
 
     return format_success('Successfully identifier all required operators')
 
