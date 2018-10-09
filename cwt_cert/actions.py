@@ -17,7 +17,8 @@ class ActionError(Exception):
     pass
 
 
-def wps_execute_action(url, identifier, inputs, api_key, *args, **kwargs):
+def wps_execute_action(url, identifier, inputs, api_key, domain=None,
+                       parameters=None, *args, **kwargs):
     client = cwt.WPSClient(url, verify=False, api_key=api_key)
 
     try:
@@ -27,7 +28,7 @@ def wps_execute_action(url, identifier, inputs, api_key, *args, **kwargs):
         raise ActionError('Did not find a process matching {}'.format(
             identifier))
 
-    client.execute(process, inputs=inputs) 
+    client.execute(process, inputs=inputs)
 
     logger.info('%r', process.status)
 
