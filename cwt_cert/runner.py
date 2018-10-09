@@ -135,7 +135,8 @@ class LogCapture(object):
     def __enter__(self):
         self.buffer = cStringIO.StringIO()
 
-        self.handler = logging.StreamHandler(self.buffer)
+        self.handler = logging.StreamHandler(sys.stdout)
+        #self.handler = logging.StreamHandler(self.buffer)
 
         formatter = logging.Formatter(
             '%(asctime)s [[%(module)s.%(funcName)s] %(levelname)s]: '
@@ -223,6 +224,8 @@ def run_test(name, actions):
             try:
                 action_result = run_action(**item)
             except Exception as e:
+                item['reason'] = str(e)
+                
                 action_status = validators.FAILURE
             else:
                 action_status = run_validations(action_result, **item)
