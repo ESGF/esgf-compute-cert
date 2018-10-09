@@ -1,7 +1,6 @@
 import copy
 import logging
 import re
-from functools import partial
 
 import cdms2
 import cwt
@@ -16,21 +15,12 @@ SUCCESS = 'success'
 FAILURE = 'failure'
 
 
-def format_result(message, *args, **kwargs):
-    status = kwargs.pop('status')
+class ValidationError(Exception):
+    def __init__(self, message, *args):
+        self.message = message.format(*args)
 
-    result = {
-        'status': status,
-        'message': message.format(*args),
-    }
-
-    return result
-
-
-format_success = partial(format_result, status=SUCCESS)
-
-
-format_failure = partial(format_result, status=FAILURE)
+    def __str__(self):
+        return self.message
 
 
 def check_shape(output, shape):
@@ -46,22 +36,22 @@ def check_shape(output, shape):
         try:
             var_shape = f[output.var_name].shape
         except AttributeError:
-            return format_failure('Variable {!r} was not found in {!r}',
+            raise ValidationError('Variable {!r} was not found in {!r}',
                                   output.var_name, output.uri)
 
         logger.info('Read shape of %r', var_shape)
 
         if var_shape != shape:
-            return format_failure('Outputs shape {!r} does not match the'
+            raise ValidationError('Outputs shape {!r} does not match the'
                                   ' expected shape {!r}', var_shape, shape)
     except cdms2.CDMSError:
-        return format_failure('Failed to open {!r}', output.uri)
+        raise ValidationError('Failed to open {!r}', output.uri)
     finally:
         if f is not None:
             f.close()
 
-    return format_success('Verified variable {!r} shape is {!r}',
-                          output.var_name, shape)
+    return 'Verified variable {!r} shape is {!r}'.format(
+        output.var_name, shape)
 
 
 def check_wps_capabilities(output, operations):
@@ -69,7 +59,7 @@ def check_wps_capabilities(output, operations):
         msg = 'Expecting type {!r} got {!r}'.format(cwt.CapabilitiesWrapper,
                                                     type(output))
 
-        return format_failure(msg)
+        raise ValidationError(msg)
 
     identifiers = [x.identifier for x in output.processes]
 
@@ -87,9 +77,10 @@ def check_wps_capabilities(output, operations):
 
         msg = 'Missing operations matching {!r}'.format(missing)
 
-        return format_failure(msg)
+        raise ValidationError('Missing operations matching {!r}', ', '.join(
+            missing_ops))
 
-    return format_success('Successfully identifier all required operators')
+    return 'Successfully identifier all required operators'
 
 
 REGISTRY = {

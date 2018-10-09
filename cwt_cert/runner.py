@@ -2,17 +2,12 @@ import cStringIO
 import json
 import logging
 import multiprocessing
-import sys
-import time
 
 import cwt
 from cwt_cert import actions
 from cwt_cert import validators
 
 logger = logging.getLogger('cwt_cert.runner')
-
-logger.setLevel(logging.INFO)
-logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 class CertificationError(Exception):
@@ -201,20 +196,19 @@ def run_validations(output, validations, **kwargs):
         try:
             result = run_validation(output, **item)
         except Exception as e:
-            logger.exception('Validation failed')
-
-            status = validators.FAILURE
-
             item['message'] = str(e)
 
-            item['status'] = status
+            item['status'] = validators.FAILURE
         else:
-            item.update(result)
+            item['message'] = result
 
-            if result['status'] == validators.FAILURE:
-                status = result['status']
+            item['status'] = validators.SUCCESS
+
+        if item['status'] == validators.FAILURE:
+            status = item['status']
 
     return status
+
 
 def run_test(name, actions):
     with LogCapture() as capture:
@@ -229,7 +223,7 @@ def run_test(name, actions):
                 action_result = run_action(**item)
             except Exception as e:
                 item['message'] = str(e)
-                
+
                 action_status = validators.FAILURE
             else:
                 action_status = run_validations(action_result, **item)
@@ -269,7 +263,7 @@ def runner(**kwargs):
 
     for test in operator_tests:
         test_result = pool.map(run_test_unpack, [test])
-   
+
         results['operator'].append(test_result)
 
     pool.close()
