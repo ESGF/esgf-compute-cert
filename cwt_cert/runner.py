@@ -5,7 +5,10 @@ import multiprocessing
 import sys
 
 import cwt
+
 from cwt_cert import actions
+from cwt_cert import node
+from cwt_cert import operator
 from cwt_cert import validators
 
 logger = logging.getLogger('cwt_cert.runner')
@@ -52,80 +55,6 @@ def json_encoder(x, **kwargs):
 
 def json_decoder(x):
     return json.loads(x, object_hook=object_hook)
-
-
-def build_operator_tests(url, api_key, **kwargs):
-    operator = [
-        {
-            'name': 'Operator aggregate',
-            'actions': [
-                {
-                    'type': actions.WPS_EXECUTE,
-                    'args': [
-                        url,
-                    ],
-                    'kwargs': {
-                        'inputs': [
-                            cwt.Variable('http://aims3.llnl.gov/thredds/dodsC/cmip5_css02_data/cmip5/output1/CMCC/CMCC-CM/decadal2005/mon/atmos/Amon/r1i2p1/cct/1/cct_Amon_CMCC-CM_decadal2005_r1i2p1_200511-201512.nc',
-                                         'cct'),
-                            cwt.Variable('http://aims3.llnl.gov/thredds/dodsC/cmip5_css02_data/cmip5/output1/CMCC/CMCC-CM/decadal2005/mon/atmos/Amon/r1i2p1/cct/1/cct_Amon_CMCC-CM_decadal2005_r1i2p1_201601-202512.nc',
-                                         'cct'),
-                            cwt.Variable('http://aims3.llnl.gov/thredds/dodsC/cmip5_css02_data/cmip5/output1/CMCC/CMCC-CM/decadal2005/mon/atmos/Amon/r1i2p1/cct/1/cct_Amon_CMCC-CM_decadal2005_r1i2p1_202601-203512.nc',
-                                         'cct'),
-                        ],
-                        'identifier': '.*\.aggregate',
-                        'variable': 'ccb',
-                        'api_key': api_key,
-                    },
-                    'validations': [
-                        {
-                            'type': validators.CHECK_SHAPE,
-                            'kwargs': {
-                                'shape': (1869, 90, 144),
-                            },
-                        },
-                    ],
-                },
-            ],
-        }
-    ]
-
-    return operator
-
-
-def build_node_tests(url, **kwargs):
-    node = [
-        {
-            'name': 'Official ESGF Operators',
-            'actions': [
-                {
-                    'type': actions.WPS_CAPABILITIES,
-                    'args': [
-                        url,
-                    ],
-                    'validations': [
-                        {
-                            'type': validators.WPS_CAPABILITIES,
-                            'kwargs': {
-                                'operations': [
-                                    '.*\.aggregate',
-                                    '.*\.average',
-                                    '.*\.max',
-                                    '.*\.metrics',
-                                    '.*\.min',
-                                    '.*\.regrid',
-                                    '.*\.subset',
-                                    '.*\.sum',
-                                ]
-                            }
-                        },
-                    ]
-                },
-            ]
-        }
-    ]
-
-    return node
 
 
 class LogCapture(object):
@@ -252,7 +181,7 @@ def runner(**kwargs):
 
     pool = multiprocessing.Pool(5)
 
-    node_tests = build_node_tests(**kwargs)
+    node_tests = node.build_node_tests(**kwargs)
 
     async_result = pool.map_async(run_test_unpack, node_tests)
 
@@ -260,7 +189,7 @@ def runner(**kwargs):
 
     results['node'] = data
 
-    operator_tests = build_operator_tests(**kwargs)
+    operator_tests = operator.build_operator_tests(**kwargs)
 
     for test in operator_tests:
         test_result = pool.map(run_test_unpack, [test])
