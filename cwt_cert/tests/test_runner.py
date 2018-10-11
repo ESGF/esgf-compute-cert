@@ -25,6 +25,21 @@ class TestRunner(unittest.TestCase):
             }
         }
 
+    @mock.patch('cwt_cert.runner.multiprocessing.Pool')
+    def test_runner(self, mock_pool):
+        result = runner.runner(url='https://testdev.be/wps/', api_key='key',
+                               output=None)
+
+        mock_pool.assert_called_with(5)
+
+        mock_pool.return_value.map_async.assert_called()
+
+        mock_pool.return_value.map_async.return_value.get.assert_called()
+
+        mock_pool.return_value.map.assert_called()
+
+        mock_pool.return_value.close.assert_called()
+
     @mock.patch('cwt_cert.runner.run_validations')
     @mock.patch('cwt_cert.runner.run_action')
     def test_run_test_validation_failure(self, mock_action, mock_validations):

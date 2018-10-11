@@ -2,6 +2,7 @@ import cStringIO
 import json
 import logging
 import multiprocessing
+import sys
 
 import cwt
 from cwt_cert import actions
