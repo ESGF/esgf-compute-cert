@@ -10,6 +10,7 @@ def build_operator_tests(url, api_key, **kwargs):
             'name': 'Operator aggregate',
             'actions': [
                 {
+                    'name': 'Performance',
                     'type': actions.WPS_EXECUTE,
                     'args': [
                         url,
