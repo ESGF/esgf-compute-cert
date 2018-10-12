@@ -23,7 +23,9 @@ class ValidationError(Exception):
         return self.message
 
 
-def check_shape(output, shape):
+def check_shape(action_output, shape):
+    output = action_output.get('output')
+
     f = None
 
     logger.info('Opening %r', output.uri)

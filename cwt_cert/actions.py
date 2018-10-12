@@ -1,6 +1,7 @@
 import logging
 import re
 import time
+from datetime import datetime
 
 import cwt
 
@@ -28,6 +29,8 @@ def wps_execute_action(url, identifier, inputs, api_key, domain=None,
         raise ActionError('Did not find a process matching {}'.format(
             identifier))
 
+    start = datetime.now()
+
     client.execute(process, inputs=inputs)
 
     logger.info('%r', process.status)
@@ -39,7 +42,14 @@ def wps_execute_action(url, identifier, inputs, api_key, domain=None,
 
     logger.info('%r', process.status)
 
-    return process.output
+    elapsed = datetime.now() - start
+
+    result = {
+        'output': process.output,
+        'elapsed': elapsed,
+    }
+
+    return result
 
 
 def wps_capabilities_action(url, *args, **kwargs):
