@@ -1,18 +1,31 @@
 import logging
 import multiprocessing
 
+import click
+import urllib3
+
 from cwt_cert import runner
 
 logger = logging.getLogger('cwt_cert.cli')
 
+urllib3.disable_warnings()
 
-class CLI(object):
-    def __init__(self):
-        pass
+CONTEXT_SETTINGS = dict(help_option_name=['-h', '--help'])
 
-    def run(self, **kwargs):
-        proc = multiprocessing.Process(target=runner.runner, kwargs=kwargs)
 
-        proc.start()
+@click.group(context_settings=CONTEXT_SETTINGS)
+@click.version_option()
+def cli():
+    pass
 
-        proc.join()
+
+@cli.command()
+@click.argument('url')
+@click.option('--output', help='A path to output the results.')
+@click.option('--api-key', help='The CWT WPS api key.')
+def run(**kwargs):
+    proc = multiprocessing.Process(target=runner.runner, kwargs=kwargs)
+
+    proc.start()
+
+    proc.join()
