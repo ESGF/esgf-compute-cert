@@ -32,8 +32,23 @@ def build_node_tests(url, **kwargs):
                         },
                     ]
                 },
-            ]
-        }
+            ],
+        },
+        {
+            'name': 'Official Dataset',
+            'actions': [
+            ],
+        },
+        {
+            'name': 'Security',
+            'actions': [
+            ],
+        },
+        {
+            'name': 'Metrics',
+            'actions': [
+            ],
+        },
     ]
 
     return node
