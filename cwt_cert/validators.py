@@ -26,31 +26,25 @@ class ValidationError(Exception):
 def check_shape(action_output, shape):
     output = action_output.get('output')
 
-    f = None
-
     logger.info('Opening %r', output.uri)
 
     try:
-        f = cdms2.open(output.uri)
+        with cdms2.open(output.uri) as f:
+            logger.info('Reading shape of variable %r', output.var_name)
 
-        logger.info('Reading shape of variable %r', output.var_name)
+            try:
+                var_shape = f[output.var_name].shape
+            except AttributeError:
+                raise ValidationError('Variable {!r} was not found in {!r}',
+                                      output.var_name, output.uri)
 
-        try:
-            var_shape = f[output.var_name].shape
-        except AttributeError:
-            raise ValidationError('Variable {!r} was not found in {!r}',
-                                  output.var_name, output.uri)
+            logger.info('Read shape of %r', var_shape)
 
-        logger.info('Read shape of %r', var_shape)
-
-        if var_shape != shape:
-            raise ValidationError('Outputs shape {!r} does not match the'
-                                  ' expected shape {!r}', var_shape, shape)
+            if var_shape != shape:
+                raise ValidationError('Outputs shape {!r} does not match the'
+                                      ' expected shape {!r}', var_shape, shape)
     except cdms2.CDMSError:
         raise ValidationError('Failed to open {!r}', output.uri)
-    finally:
-        if f is not None:
-            f.close()
 
     return 'Verified variable {!r} shape is {!r}'.format(
         output.var_name, shape)
