@@ -148,15 +148,15 @@ def run_test(name, actions):
         result = {'name': name, 'actions': []}
 
         if len(actions) > 1:
-            print('{}'.format(name))
+            print('{:<30}'.format(name))
         else:
-            print('{}'.format(name), end='\r')
+            print('{:<30}'.format(name), end='\r')
 
         status = validators.SUCCESS
 
         for item in actions:
             if len(actions) > 1:
-                print('{}'.format(name), end='\r')
+                print('  {:<28}'.format(item['name']), end='\r')
 
             action_status = validators.SUCCESS
 
@@ -172,7 +172,7 @@ def run_test(name, actions):
             item['status'] = action_status
 
             if len(actions) > 1:
-                print('{}\t\t{}'.format(name, action_status))
+                print('  {:<28}{:^30}'.format(item['name'], action_status))
 
             result['actions'].append(item)
 
@@ -184,7 +184,7 @@ def run_test(name, actions):
         result['log'] = capture.value
 
         if len(actions) <= 1:
-            print('{}\t\t{}'.format(name, status))
+            print('{:<30}{:^30}'.format(name, status))
 
     return result
 
