@@ -126,6 +126,9 @@ def run_validations(output, validations, **kwargs):
     status = validators.SUCCESS
 
     for item in validations:
+        if 'name' in item:
+            print('  {:<28}'.format(item['name']), end='\r')
+
         try:
             result = run_validation(output, **item)
         except Exception as e:
@@ -140,6 +143,9 @@ def run_validations(output, validations, **kwargs):
         if item['status'] == validators.FAILURE:
             status = item['status']
 
+        if 'name' in item:
+            print('  {:<28}{:^30}'.format(item['name'], item['status']))
+
     return status
 
 
@@ -147,37 +153,33 @@ def run_test(name, actions):
     with LogCapture() as capture:
         result = {'name': name, 'actions': []}
 
-        if len(actions) > 1:
-            print('{:<30}'.format(name))
-        else:
+        if len(actions) <= 1:
             print('{:<30}'.format(name), end='\r')
+        else:
+            print('{:<30}'.format(name))
 
-        status = validators.SUCCESS
+        status = validators.FAILURE
 
         for item in actions:
-            if len(actions) > 1:
+            if 'name' in item:
                 print('  {:<28}'.format(item['name']), end='\r')
-
-            action_status = validators.SUCCESS
 
             try:
                 action_result = run_action(**item)
             except Exception as e:
                 item['message'] = str(e)
 
-                action_status = validators.FAILURE
+                item['status'] = validators.FAILURE
             else:
-                action_status = run_validations(action_result, **item)
+                item['status'] = run_validations(action_result, **item)
 
-            item['status'] = action_status
-
-            if len(actions) > 1:
-                print('  {:<28}{:^30}'.format(item['name'], action_status))
+            if 'name' in item:
+                print('  {:<28}{:^30}'.format(item['name'], item['status']))
 
             result['actions'].append(item)
 
-            if action_status == validators.FAILURE:
-                status = action_status
+            if item['status'] == validators.SUCCESS:
+                status = item['status']
 
         result['status'] = status
 
