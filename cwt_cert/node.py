@@ -40,11 +40,6 @@ def build_node_tests(url, **kwargs):
             ],
         },
         {
-            'name': 'Security',
-            'actions': [
-            ],
-        },
-        {
             'name': 'Metrics',
             'actions': [
             ],
