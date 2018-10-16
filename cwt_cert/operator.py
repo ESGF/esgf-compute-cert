@@ -7,26 +7,21 @@ from cwt_cert import validators
 def build_operator_tests(url, api_key, **kwargs):
     operator = [
         {
-            'name': 'Operator aggregate',
+            'name': 'Aggregate',
             'actions': [
                 {
-                    'name': 'API Compliant',
-                    'validations': [],
-                },
-                {
-                    'name': 'Performance',
                     'type': actions.WPS_EXECUTE,
                     'args': [
                         url,
                     ],
                     'kwargs': {
                         'inputs': [
-                            cwt.Variable('http://aims3.llnl.gov/thredds/dodsC/cmip5_css02_data/cmip5/output1/CMCC/CMCC-CM/decadal2005/mon/atmos/Amon/r1i2p1/cct/1/cct_Amon_CMCC-CM_decadal2005_r1i2p1_200511-201512.nc',
-                                         'cct'),
-                            cwt.Variable('http://aims3.llnl.gov/thredds/dodsC/cmip5_css02_data/cmip5/output1/CMCC/CMCC-CM/decadal2005/mon/atmos/Amon/r1i2p1/cct/1/cct_Amon_CMCC-CM_decadal2005_r1i2p1_201601-202512.nc',
-                                         'cct'),
-                            cwt.Variable('http://aims3.llnl.gov/thredds/dodsC/cmip5_css02_data/cmip5/output1/CMCC/CMCC-CM/decadal2005/mon/atmos/Amon/r1i2p1/cct/1/cct_Amon_CMCC-CM_decadal2005_r1i2p1_202601-203512.nc',
-                                         'cct'),
+                            cwt.Variable('https://dataserver.nccs.nasa.gov/thredds/dodsC/CMIP5/NASA/GISS/historical/E2-H_historical_r2i1p3/ccb_Amon_GISS-E2-H_historical_r2i1p3_185001-190012.nc',
+                                         'ccb'),
+                            cwt.Variable('https://dataserver.nccs.nasa.gov/thredds/dodsC/CMIP5/NASA/GISS/historical/E2-H_historical_r2i1p3/ccb_Amon_GISS-E2-H_historical_r2i1p3_190101-195012.nc',
+                                         'ccb'),
+                            cwt.Variable('https://dataserver.nccs.nasa.gov/thredds/dodsC/CMIP5/NASA/GISS/historical/E2-H_historical_r2i1p3/ccb_Amon_GISS-E2-H_historical_r2i1p3_195101-200512.nc',
+                                         'ccb'),
                         ],
                         'identifier': '.*\.aggregate',
                         'variable': 'ccb',
@@ -34,21 +29,24 @@ def build_operator_tests(url, api_key, **kwargs):
                     },
                     'validations': [
                         {
+                            'name': 'API Compliant',
+                        },
+                        {
+                            'name': 'Performance',
                             'type': validators.CHECK_SHAPE,
                             'kwargs': {
-                                'shape': (1869, 90, 144),
+                                'shape': (1872, 90, 144),
                             },
                         },
+                        {
+                            'name': 'Provenance',
+                        }
                     ],
                 },
                 {
                     'name': 'Stress',
                     'validations': [],
                 },
-                {
-                    'name': 'Provenance',
-                    'validations': [],
-                }
             ],
         }
     ]
