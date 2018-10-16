@@ -1,7 +1,10 @@
+from __future__ import print_function
+
 import cStringIO
 import json
 import logging
 import multiprocessing
+import signal
 import sys
 
 import cwt
@@ -144,9 +147,17 @@ def run_test(name, actions):
     with LogCapture() as capture:
         result = {'name': name, 'actions': []}
 
+        if len(actions) > 1:
+            print('{}'.format(name))
+        else:
+            print('{}'.format(name), end='\r')
+
         status = validators.SUCCESS
 
         for item in actions:
+            if len(actions) > 1:
+                print('{}'.format(name), end='\r')
+
             action_status = validators.SUCCESS
 
             try:
@@ -160,6 +171,9 @@ def run_test(name, actions):
 
             item['status'] = action_status
 
+            if len(actions) > 1:
+                print('{}\t\t{}'.format(name, action_status))
+
             result['actions'].append(item)
 
             if action_status == validators.FAILURE:
@@ -168,6 +182,9 @@ def run_test(name, actions):
         result['status'] = status
 
         result['log'] = capture.value
+
+        if len(actions) <= 1:
+            print('{}\t\t{}'.format(name, status))
 
     return result
 
