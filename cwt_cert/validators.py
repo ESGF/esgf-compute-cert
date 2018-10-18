@@ -17,7 +17,19 @@ CHECK_SHAPE = 'check_shape'
 SUCCESS = 'success'
 FAILURE = 'failure'
 
+REGISTRY = {}
 
+
+def register(name):
+    def wrapper(func):
+        if name not in REGISTRY:
+            REGISTRY[name] = func
+
+        return func
+    return wrapper
+
+
+@register(CHECK_SHAPE)
 def check_shape(action_output, shape):
     output = action_output.get('output')
 
@@ -56,6 +68,7 @@ def check_shape(action_output, shape):
         output.var_name, shape)
 
 
+@register(WPS_CAPABILITIES)
 def check_wps_capabilities(output, operations):
     if not isinstance(output, cwt.CapabilitiesWrapper):
         msg = 'Expecting type {!r} got {!r}'.format(cwt.CapabilitiesWrapper,
@@ -82,9 +95,3 @@ def check_wps_capabilities(output, operations):
         raise exceptions.CertificationError(msg)
 
     return 'Successfully identifier all required operators'
-
-
-REGISTRY = {
-    WPS_CAPABILITIES: check_wps_capabilities,
-    CHECK_SHAPE: check_shape,
-}

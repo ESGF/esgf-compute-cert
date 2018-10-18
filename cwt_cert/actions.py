@@ -16,7 +16,20 @@ logger.setLevel(logging.DEBUG)
 WPS_CAPABILITIES = 'wps_capabilities_action'
 WPS_EXECUTE = 'wps_execute_action'
 
+REGISTRY = {}
 
+
+def register(name):
+    def wrapper(func):
+        if name not in REGISTRY:
+            REGISTRY[name] = func
+
+        return func
+
+    return wrapper
+
+
+@register(WPS_EXECUTE)
 def wps_execute_action(url, identifier, inputs, api_key, domain=None,
                        parameters=None, *args, **kwargs):
     client = cwt.WPSClient(url, verify=False, api_key=api_key)
@@ -44,15 +57,10 @@ def wps_execute_action(url, identifier, inputs, api_key, domain=None,
     return result
 
 
+@register(WPS_CAPABILITIES)
 def wps_capabilities_action(url, *args, **kwargs):
     client = cwt.WPSClient(url, verify=False)
 
     data = client.get_capabilities()
 
     return data
-
-
-REGISTRY = {
-    WPS_CAPABILITIES: wps_capabilities_action,
-    WPS_EXECUTE: wps_execute_action,
-}
