@@ -10,6 +10,7 @@ from cwt_cert import exceptions
 logging.getLogger('urllib3').setLevel(logging.DEBUG)
 
 logger = logging.getLogger('cwt_cert.actions')
+logger.propagate = True
 logger.setLevel(logging.DEBUG)
 
 WPS_CAPABILITIES = 'wps_capabilities_action'
@@ -30,6 +31,8 @@ def wps_execute_action(url, identifier, inputs, api_key, domain=None,
     start = datetime.now()
 
     client.execute(process, inputs=inputs)
+
+    process.wait()
 
     elapsed = datetime.now() - start
 

@@ -101,6 +101,7 @@ def run_action(type, args=None, kwargs=None, **extra):
     try:
         output = action(*args, **kwargs)
     except Exception as e:
+        logger.exception('Action failed')
         raise exceptions.CertificationError(str(e))
 
     return output
@@ -142,7 +143,7 @@ def run_test(name, actions):
 
             try:
                 output = run_action(**act_item)
-            except exceptions.CertificationError as e:
+            except Exception as e:
                 logger.exception('Action failed')
 
                 act_item['error'] = str(e)
@@ -168,7 +169,7 @@ def run_test(name, actions):
 
                 try:
                     result = run_validator(output, **val_item)
-                except exceptions.CertificationError as e:
+                except Exception as e:
                     logger.exception('Validator failed')
 
                     val_item['result'] = validators.FAILURE

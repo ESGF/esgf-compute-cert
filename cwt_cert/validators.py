@@ -8,6 +8,7 @@ import cwt
 from cwt_cert import exceptions
 
 logger = logging.getLogger('cwt_cert.validators')
+logger.propagate = True
 logger.setLevel(logging.DEBUG)
 
 WPS_CAPABILITIES = 'wps_capabilities'
