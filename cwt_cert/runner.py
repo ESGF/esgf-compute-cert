@@ -218,6 +218,13 @@ def run_test_unpack(kwargs):
 
 
 def init_worker():
+    """ Worker init function.
+
+    Since we're using the multiprocessing library and need to handle
+    a SIGINT (ctrl-c), we need the child processes to ignore SIGINT.
+    This allows the parent process to terminate the workers in a
+    correct fashion.
+    """
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
@@ -233,27 +240,29 @@ def runner(**kwargs):
 
         async_result = pool.map_async(run_test_unpack, node_tests)
 
-        results['node'] = async_result.get(120)
+        results['node'] = async_result.get(2 * 60)
 
         operator_tests = operator.build_operator_tests(**kwargs)
 
         print('Operators {:=<90}'.format(''))
 
         for test in operator_tests:
-            test_result = pool.map_async(run_test_unpack, [test])
+            async_result = pool.map_async(run_test_unpack, [test])
 
-            results['operator'].append(test_result)
+            result = async_result.get(2 * 60)
 
-        pool.close()
-
-        pool.join()
+            results['operator'].extend(result)
     except KeyboardInterrupt:
         pool.terminate()
 
         pool.join()
-    finally:
-        if kwargs['output'] is not None:
-            with open(kwargs['output'], 'w') as outfile:
-                json_encoder_to_file(results, outfile, indent=2)
+    else:
+        pool.close()
+
+        pool.join()
+        
+    if kwargs['output'] is not None:
+        with open(kwargs['output'], 'w') as outfile:
+            json_encoder_to_file(results, outfile, indent=2)
 
     return results
