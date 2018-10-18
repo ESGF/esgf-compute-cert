@@ -217,28 +217,43 @@ def run_test_unpack(kwargs):
     return run_test(**kwargs)
 
 
+def init_worker():
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+
 def runner(**kwargs):
     results = {'node': [], 'operator': []}
 
-    pool = multiprocessing.Pool(5)
+    pool = multiprocessing.Pool(5, init_worker)
 
-    node_tests = node.build_node_tests(**kwargs)
+    try:
+        node_tests = node.build_node_tests(**kwargs)
 
-    async_result = pool.map_async(run_test_unpack, node_tests)
+        print('Node {:=<95}'.format(''))
 
-    results['node'] = async_result.get(120)
+        async_result = pool.map_async(run_test_unpack, node_tests)
 
-    operator_tests = operator.build_operator_tests(**kwargs)
+        results['node'] = async_result.get(120)
 
-    for test in operator_tests:
-        test_result = pool.map(run_test_unpack, [test])
+        operator_tests = operator.build_operator_tests(**kwargs)
 
-        results['operator'].append(test_result)
+        print('Operators {:=<90}'.format(''))
 
-    pool.close()
+        for test in operator_tests:
+            test_result = pool.map_async(run_test_unpack, [test])
 
-    if kwargs['output'] is not None:
-        with open(kwargs['output'], 'w') as outfile:
-            json_encoder_to_file(results, outfile, indent=2)
+            results['operator'].append(test_result)
+
+        pool.close()
+
+        pool.join()
+    except KeyboardInterrupt:
+        pool.terminate()
+
+        pool.join()
+    finally:
+        if kwargs['output'] is not None:
+            with open(kwargs['output'], 'w') as outfile:
+                json_encoder_to_file(results, outfile, indent=2)
 
     return results
