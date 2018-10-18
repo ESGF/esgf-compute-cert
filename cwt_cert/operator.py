@@ -28,25 +28,25 @@ def build_operator_tests(url, api_key, **kwargs):
                         'api_key': api_key,
                     },
                     'validations': [
+                        #{
+                        #    'name': 'API Compliant',
+                        #},
                         {
-                            'name': 'API Compliant',
-                        },
-                        {
-                            'name': 'Performance',
+                            'name': 'Correctness',
                             'type': validators.CHECK_SHAPE,
                             'kwargs': {
                                 'shape': (1872, 90, 144),
                             },
                         },
-                        {
-                            'name': 'Provenance',
-                        }
+                        #{
+                        #    'name': 'Provenance',
+                        #}
                     ],
                 },
-                {
-                    'name': 'Stress',
-                    'validations': [],
-                },
+                #{
+                #    'name': 'Stress',
+                #    'validations': [],
+                #},
             ],
         }
     ]

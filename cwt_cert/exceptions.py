@@ -1,0 +1,2 @@
+class CertificationError(Exception):
+    pass

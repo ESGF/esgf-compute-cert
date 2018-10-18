@@ -13,12 +13,9 @@ from cwt_cert import actions
 from cwt_cert import node
 from cwt_cert import operator
 from cwt_cert import validators
+from cwt_cert import exceptions
 
 logger = logging.getLogger('cwt_cert.runner')
-
-
-class CertificationError(Exception):
-    pass
 
 
 def default(x):
@@ -70,6 +67,8 @@ class LogCapture(object):
 
         self.handler = logging.StreamHandler(self.buffer)
 
+        self.handler.setLevel(logging.DEBUG)
+
         formatter = logging.Formatter(
             '%(asctime)s [[%(module)s.%(funcName)s] %(levelname)s]: '
             '%(message)s')
@@ -89,106 +88,109 @@ class LogCapture(object):
 
 
 def run_action(type, args=None, kwargs=None, **extra):
+    assert type in actions.REGISTRY
+
     if args is None:
         args = []
 
     if kwargs is None:
         kwargs = {}
 
+    action = actions.REGISTRY[type]
+
     try:
-        action = actions.REGISTRY[type]
-    except KeyError:
-        raise CertificationError('Missing action {!r}'.format(type))
+        output = action(*args, **kwargs)
+    except Exception as e:
+        raise exceptions.CertificationError(str(e))
 
-    result = action(*args, **kwargs)
-
-    return result
+    return output
 
 
-def run_validation(output, type, args=None, kwargs=None, **extra):
+def run_validator(output, type, args=None, kwargs=None, **extra):
+    assert type in validators.REGISTRY
+
     if args is None:
         args = []
 
     if kwargs is None:
         kwargs = {}
 
-    try:
-        validator = validators.REGISTRY[type]
-    except KeyError:
-        raise CertificationError('Missing validator {!r}'.format(type))
+    validator = validators.REGISTRY[type]
 
-    result = validator(output, *args, **kwargs)
+    try:
+        result = validator(output, *args, **kwargs)
+    except Exception as e:
+        raise exceptions.CertificationError(str(e))
 
     return result
-
-
-def run_validations(output, validations, **kwargs):
-    status = validators.SUCCESS
-
-    for item in validations:
-        if 'name' in item:
-            print('  {:<28}'.format(item['name']), end='\r')
-
-        try:
-            result = run_validation(output, **item)
-        except Exception as e:
-            item['message'] = str(e)
-
-            item['status'] = validators.FAILURE
-        else:
-            item['message'] = result
-
-            item['status'] = validators.SUCCESS
-
-        if item['status'] == validators.FAILURE:
-            status = item['status']
-
-        if 'name' in item:
-            print('  {:<28}{:^30}'.format(item['name'], item['status']))
-
-    return status
 
 
 def run_test(name, actions):
     with LogCapture() as capture:
-        result = {'name': name, 'actions': []}
+        test_results = {
+            'name': name,
+        }
 
-        if len(actions) <= 1:
-            print('{:<30}'.format(name), end='\r')
-        else:
-            print('{:<30}'.format(name))
+        test_result = validators.SUCCESS
 
-        status = validators.FAILURE
+        print('{:<40}'.format(name), end='\r')
 
-        for item in actions:
-            if 'name' in item:
-                print('  {:<28}'.format(item['name']), end='\r')
+        action_results = []
+
+        for act_item in actions:
+            action_result = act_item
 
             try:
-                action_result = run_action(**item)
-            except Exception as e:
-                item['message'] = str(e)
+                output = run_action(**act_item)
+            except exceptions.CertificationError as e:
+                logger.exception('Action failed')
 
-                item['status'] = validators.FAILURE
+                act_item['error'] = str(e)
+
+                act_item['result'] = validators.FAILURE
+
+                action_results.append(action_result)
+
+                print('{:<40}{:^40}'.format(name, act_item['result']))
+                
+                continue
             else:
-                item['status'] = run_validations(action_result, **item)
+                act_item['result'] = validators.SUCCESS
 
-            if 'name' in item:
-                print('  {:<28}{:^30}'.format(item['name'], item['status']))
+                print('{:<40}'.format(name))
 
-            result['actions'].append(item)
+            assert 'validations' in act_item
 
-            if item['status'] == validators.SUCCESS:
-                status = item['status']
+            for val_item in act_item['validations']:
+                assert 'name' in val_item
 
-        result['status'] = status
+                print('  {:<38}'.format(val_item['name']), end='\r')
 
-        result['log'] = capture.value
+                try:
+                    result = run_validator(output, **val_item)
+                except exceptions.CertificationError as e:
+                    logger.exception('Validator failed')
 
-        if len(actions) <= 1:
-            print('{:<30}{:^30}'.format(name, status))
+                    val_item['result'] = validators.FAILURE
 
-    return result
+                    val_item['error'] = str(e)
+                else:
+                    val_item['result'] = validators.SUCCESS
+
+                    val_item['message'] = result
+
+                print('  {:<38}{:^40}'.format(val_item['name'],
+                                              val_item['result']))
+
+            action_results.append(action_result)
+
+        test_results['actions'] = action_results
+
+        test_results['result'] = test_result
+
+        test_results['log'] = capture.value
+
+    return test_results
 
 
 def run_test_unpack(kwargs):
@@ -204,9 +206,7 @@ def runner(**kwargs):
 
     async_result = pool.map_async(run_test_unpack, node_tests)
 
-    data = async_result.get(120)
-
-    results['node'] = data
+    results['node'] = async_result.get(120)
 
     operator_tests = operator.build_operator_tests(**kwargs)
 

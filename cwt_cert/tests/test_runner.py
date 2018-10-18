@@ -1,207 +1,113 @@
+import datetime
 import unittest
 
 import mock
 
 from cwt_cert import actions
+from cwt_cert import exceptions
 from cwt_cert import runner
 from cwt_cert import validators
 
 
 class TestRunner(unittest.TestCase):
-    def setUp(self):
-        self.val_inp1 = {
-            'type': 'type1',
-            'args': ['args1'],
-            'kwargs': {
-                'keyword1': 'value1',
-            }
-        }
 
-        self.val_inp2 = {
-            'type': 'type2',
-            'args': ['args2'],
-            'kwargs': {
-                'keyword2': 'value2',
-            }
-        }
+    def test_run_validator_missing(self):
+        with mock.patch('cwt_cert.validators.REGISTRY', {}):
+            with self.assertRaises(AssertionError):
+                runner.run_validator(None, 'test')
 
-    @mock.patch('cwt_cert.runner.multiprocessing.Pool')
-    def test_runner(self, mock_pool):
-        result = runner.runner(url='https://testdev.be/wps/', api_key='key',
-                               output=None)
+    def test_run_validator_exception(self):
+        error_message = 'something went wrong'
 
-        mock_pool.assert_called_with(5)
+        mock_action = mock.MagicMock(side_effect=Exception(error_message))
 
-        mock_pool.return_value.map_async.assert_called()
-
-        mock_pool.return_value.map_async.return_value.get.assert_called()
-
-        mock_pool.return_value.map.assert_called()
-
-        mock_pool.return_value.close.assert_called()
-
-    @mock.patch('cwt_cert.runner.run_validations')
-    @mock.patch('cwt_cert.runner.run_action')
-    def test_run_test_validation_failure(self, mock_action, mock_validations):
-        mock_action.side_effect = Exception('something terrible went wrong')
-
-        mock_validations.return_value = validators.FAILURE
+        registry = {'test': mock_action}
 
         args = ['arg1']
-        kwargs = {'keyword1': 'value1'}
 
-        test1 = {'args': args, 'kwargs': kwargs}
+        kwargs = {'key1': 'value1'}
 
-        result = runner.run_test('verify this', [test1])
+        with mock.patch('cwt_cert.validators.REGISTRY', registry):
+            with self.assertRaises(exceptions.CertificationError):
+                runner.run_validator(None, 'test', args=args, kwargs=kwargs)
 
-        mock_action.assert_called_with(args=args, kwargs=kwargs)
+    def test_run_validator_no_arguments(self):
+        mock_action = mock.MagicMock(return_value=validators.SUCCESS)
 
-        self.assertEqual(result['name'], 'verify this')
-        self.assertEqual(result['status'], validators.FAILURE)
+        registry = {'test': mock_action}
 
-        self.assertEqual(result['actions'][0]['status'], validators.FAILURE)
-        self.assertEqual(result['actions'][0]['message'], 'something terrible'
-                         ' went wrong')
+        with mock.patch('cwt_cert.validators.REGISTRY', registry):
+            status = runner.run_validator(None, 'test')
 
-    @mock.patch('cwt_cert.runner.run_validations')
-    @mock.patch('cwt_cert.runner.run_action')
-    def test_run_test_action_failure(self, mock_action, mock_validations):
-        mock_action.side_effect = Exception('something terrible went wrong')
+        mock_action.assert_called_with(None)
 
-        mock_validations.return_value = validators.SUCCESS
+    def test_run_validator(self):
+        mock_action = mock.MagicMock(return_value=validators.SUCCESS)
 
-        args = ['arg1']
-        kwargs = {'keyword1': 'value1'}
-
-        test1 = {'args': args, 'kwargs': kwargs}
-
-        result = runner.run_test('verify this', [test1])
-
-        mock_action.assert_called_with(args=args, kwargs=kwargs)
-
-        self.assertEqual(result['name'], 'verify this')
-        self.assertEqual(result['status'], validators.FAILURE)
-
-        self.assertEqual(result['actions'][0]['status'], validators.FAILURE)
-        self.assertEqual(result['actions'][0]['message'], 'something terrible'
-                         ' went wrong')
-
-    @mock.patch('cwt_cert.runner.run_validations')
-    @mock.patch('cwt_cert.runner.run_action')
-    def test_run_test(self, mock_action, mock_validations):
-        mock_action.return_value = 'action output'
-
-        mock_validations.return_value = validators.SUCCESS
+        registry = {'test': mock_action}
 
         args = ['arg1']
-        kwargs = {'keyword1': 'value1'}
 
-        test1 = {'args': args, 'kwargs': kwargs}
+        kwargs = {'key1': 'value1'}
 
-        result = runner.run_test('verify this', [test1])
+        with mock.patch('cwt_cert.validators.REGISTRY', registry):
+            result = runner.run_validator(None, 'test', args=args, kwargs=kwargs, test='test')
 
-        mock_action.assert_called_with(args=args, kwargs=kwargs)
-
-        mock_validations.assert_called_with('action output', args=args,
-                                            kwargs=kwargs)
-
-        self.assertEqual(result['name'], 'verify this')
-        self.assertEqual(result['status'], validators.SUCCESS)
-
-        self.assertEqual(result['actions'][0]['status'], validators.SUCCESS)
-
-    @mock.patch('cwt_cert.runner.run_validation')
-    def test_run_validations_failure(self, mock_run):
-        mock_run.side_effect = ['validation result',
-                                Exception('something wrong')]
-
-        result = runner.run_validations('output', [
-            self.val_inp1,
-            self.val_inp2,
-        ])
-
-        mock_run.assert_any_call('output', type='type1', args=['args1'],
-                                 kwargs={'keyword1': 'value1'})
-
-        mock_run.assert_any_call('output', type='type2', args=['args2'],
-                                 kwargs={'keyword2': 'value2'})
-
-        self.assertIn('status', self.val_inp1)
-        self.assertEqual(self.val_inp1['status'], validators.SUCCESS)
-        self.assertIn('message', self.val_inp1)
-        self.assertEqual(self.val_inp1['message'], 'validation result')
-
-        self.assertIn('status', self.val_inp2)
-        self.assertEqual(self.val_inp2['status'], validators.FAILURE)
-        self.assertIn('message', self.val_inp2)
-        self.assertEqual(self.val_inp2['message'], 'something wrong')
-
-        self.assertEqual(result, validators.FAILURE)
-
-    @mock.patch('cwt_cert.runner.run_validation')
-    def test_run_validations(self, mock_run):
-        mock_run.return_value = 'validation result'
-
-        result = runner.run_validations('output', [
-            self.val_inp1,
-            self.val_inp2,
-        ])
-
-        mock_run.assert_any_call('output', type='type1', args=['args1'],
-                                 kwargs={'keyword1': 'value1'})
-
-        mock_run.assert_any_call('output', type='type2', args=['args2'],
-                                 kwargs={'keyword2': 'value2'})
-
-        self.assertIn('status', self.val_inp1)
-        self.assertEqual(self.val_inp1['status'], validators.SUCCESS)
-        self.assertIn('message', self.val_inp1)
-        self.assertEqual(self.val_inp1['message'], 'validation result')
-
-        self.assertIn('status', self.val_inp2)
-        self.assertEqual(self.val_inp2['status'], validators.SUCCESS)
-        self.assertIn('message', self.val_inp2)
-        self.assertEqual(self.val_inp2['message'], 'validation result')
+        mock_action.assert_called_with(None, *args, **kwargs)
 
         self.assertEqual(result, validators.SUCCESS)
 
-    def test_run_validation_missing(self):
-        validators.REGISTRY = {}
+    def test_run_action_missing(self):
+        with mock.patch('cwt_cert.actions.REGISTRY', {}):
+            with self.assertRaises(AssertionError):
+                runner.run_action('test')
 
-        with self.assertRaises(runner.CertificationError):
-            runner.run_validation('action_output', 'test')
+    def test_run_action_exception(self):
+        error_message = 'something went wrong'
 
-    def test_run_validation(self):
-        mock_validation = mock.MagicMock(return_value='output')
+        mock_action = mock.MagicMock(side_effect=Exception(error_message))
 
-        validators.REGISTRY = {
-            'test': mock_validation,
+        registry = {'test': mock_action}
+
+        args = ['arg1']
+
+        kwargs = {'key1': 'value1'}
+
+        with mock.patch('cwt_cert.actions.REGISTRY', registry):
+            with self.assertRaises(exceptions.CertificationError):
+                runner.run_action('test', args=args, kwargs=kwargs)
+
+    def test_run_action_no_arguments(self):
+        action_result = {
+            'data': 'some data',
         }
 
-        result = runner.run_validation('action_output', 'test', ['arg1'],
-                                       {'keyword1': 'value'})
+        mock_action = mock.MagicMock(return_value=action_result)
 
-        self.assertEqual(result, 'output')
+        registry = {'test': mock_action}
 
-        mock_validation.assert_called_with('action_output', 'arg1',
-                                           keyword1='value')
+        with mock.patch('cwt_cert.actions.REGISTRY', registry):
+            output = runner.run_action('test')
 
-    def test_run_action_missing(self):
-        actions.REGISTRY = {}
-
-        with self.assertRaises(runner.CertificationError):
-            runner.run_action('test')
+        mock_action.assert_called_with()
 
     def test_run_action(self):
-        mock_action = mock.MagicMock(return_value='output')
-
-        actions.REGISTRY = {
-            'test': mock_action,
+        action_result = {
+            'data': 'some data',
         }
 
-        result = runner.run_action('test', args=['arg1'],
-                                   kwargs={'keyword1': 'value'})
+        mock_action = mock.MagicMock(return_value=action_result)
 
-        self.assertEqual(result, 'output')
+        registry = {'test': mock_action}
 
-        mock_action.assert_called_with('arg1', keyword1='value')
+        args = ['arg1']
+
+        kwargs = {'key1': 'value1'}
+
+        with mock.patch('cwt_cert.actions.REGISTRY', registry):
+            output = runner.run_action('test', args=args, kwargs=kwargs,
+                                       test='test')
+
+        mock_action.assert_called_with(*args, **kwargs)
+
+        self.assertEqual(output, action_result)

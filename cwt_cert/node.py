@@ -17,6 +17,7 @@ def build_node_tests(url, **kwargs):
                     'validations': [
                         {
                             'type': validators.WPS_CAPABILITIES,
+                            'name': 'Check GetCapabilities',
                             'kwargs': {
                                 'operations': [
                                     '.*\.aggregate',
@@ -34,16 +35,16 @@ def build_node_tests(url, **kwargs):
                 },
             ],
         },
-        {
-            'name': 'Official Dataset',
-            'actions': [
-            ],
-        },
-        {
-            'name': 'Metrics',
-            'actions': [
-            ],
-        },
+        #{
+        #    'name': 'Official Dataset',
+        #    'actions': [
+        #    ],
+        #},
+        #{
+        #    'name': 'Metrics',
+        #    'actions': [
+        #    ],
+        #},
     ]
 
     return node

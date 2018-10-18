@@ -5,6 +5,8 @@ import re
 import cdms2
 import cwt
 
+from cwt_cert import exceptions
+
 logger = logging.getLogger('cwt_cert.validators')
 logger.setLevel(logging.DEBUG)
 
@@ -13,14 +15,6 @@ CHECK_SHAPE = 'check_shape'
 
 SUCCESS = 'success'
 FAILURE = 'failure'
-
-
-class ValidationError(Exception):
-    def __init__(self, message, *args):
-        self.message = message.format(*args)
-
-    def __str__(self):
-        return self.message
 
 
 def check_shape(action_output, shape):
@@ -35,16 +29,22 @@ def check_shape(action_output, shape):
             try:
                 var_shape = f[output.var_name].shape
             except AttributeError:
-                raise ValidationError('Variable {!r} was not found in {!r}',
-                                      output.var_name, output.uri)
+                msg = 'Variable {!r} was not found in {!r}'.format(
+                    output.var_name, output.uri)
+
+                raise exceptions.CertificationError(msg)
 
             logger.info('Read shape of %r', var_shape)
 
             if var_shape != shape:
-                raise ValidationError('Outputs shape {!r} does not match the'
-                                      ' expected shape {!r}', var_shape, shape)
+                msg = 'Outputs shape {!r} does not match the '
+                'expected shape {!r}'.format(var_shape, shape)
+
+                raise exceptions.CertificationsError(msg)
     except cdms2.CDMSError:
-        raise ValidationError('Failed to open {!r}', output.uri)
+        msg = 'Failed to open {!r}'.format(output.uri)
+        
+        raise exceptions.CertificationError(msg)
 
     return 'Verified variable {!r} shape is {!r}'.format(
         output.var_name, shape)
@@ -55,7 +55,7 @@ def check_wps_capabilities(output, operations):
         msg = 'Expecting type {!r} got {!r}'.format(cwt.CapabilitiesWrapper,
                                                     type(output))
 
-        raise ValidationError(msg)
+        raise exceptions.CertificationError(msg)
 
     identifiers = [x.identifier for x in output.processes]
 
@@ -73,8 +73,7 @@ def check_wps_capabilities(output, operations):
 
         msg = 'Missing operations matching {!r}'.format(missing)
 
-        raise ValidationError('Missing operations matching {!r}', ', '.join(
-            missing_ops))
+        raise exceptions.CertificationError(msg)
 
     return 'Successfully identifier all required operators'
 

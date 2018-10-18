@@ -55,7 +55,11 @@ def wps_execute_action(url, identifier, inputs, api_key, domain=None,
 def wps_capabilities_action(url, *args, **kwargs):
     client = cwt.WPSClient(url, verify=False)
 
-    return client.get_capabilities()
+    data = client.get_capabilities()
+
+    logger.info('%r', data)
+
+    return data
 
 
 REGISTRY = {
