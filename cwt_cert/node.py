@@ -1,12 +1,15 @@
+import logging
+
 import cwt
 
 from cwt_cert import actions
 from cwt_cert import validators
 
 
-def build_node_tests(url, **kwargs):
+def build_node_tests(url, api_key, **kwargs):
     node = [
         {
+            'cli_kwargs': kwargs,
             'name': 'Official ESGF Operators',
             'actions': [
                 {
@@ -41,8 +44,19 @@ def build_node_tests(url, **kwargs):
         #    ],
         #},
         #{
+        #    'cli_kwargs': kwargs,
         #    'name': 'Metrics',
         #    'actions': [
+        #        {
+        #            'type': actions.WPS_EXECUTE,
+        #            'args': [
+        #                url,
+        #            ],
+        #            'kwargs': {
+        #                'identifier': '.*\.metrics',
+        #                'api_key': api_key,
+        #            },
+        #        }
         #    ],
         #},
     ]

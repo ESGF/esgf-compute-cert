@@ -58,33 +58,51 @@ def json_decoder(x):
 
 
 class LogCapture(object):
+    formatter = logging.Formatter(
+        '%(asctime)s [[%(module)s.%(funcName)s] %(levelname)s]: '
+        '%(message)s')
+
+    def __init__(self, debug):
+        self.handlers = []
+
+        if debug:
+            handler = logging.StreamHandler(sys.stdout)
+
+            handler.setLevel(logging.DEBUG)
+
+            handler.setFormatter(self.formatter)
+
+            self.handlers.append(handler)
+
+        self.buffer = cStringIO.StringIO()
+
+        handler = logging.StreamHandler(self.buffer)
+
+        handler.setLevel(logging.DEBUG)
+
+        handler.setFormatter(self.formatter)
+
+        self.handlers.append(handler)
+
+        self.logger = logging.getLogger()
+
+        self.logger.setLevel(logging.DEBUG)
+
     @property
     def value(self):
         return self.buffer.getvalue()
 
     def __enter__(self):
-        self.buffer = cStringIO.StringIO()
-
-        self.handler = logging.StreamHandler(self.buffer)
-
-        self.handler.setLevel(logging.DEBUG)
-
-        formatter = logging.Formatter(
-            '%(asctime)s [[%(module)s.%(funcName)s] %(levelname)s]: '
-            '%(message)s')
-
-        self.handler.setFormatter(formatter)
-
-        self.logger = logging.getLogger()
-
-        self.logger.addHandler(self.handler)
+        for handler in self.handlers:
+            self.logger.addHandler(handler)
 
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.buffer.close()
+        for handler in self.handlers:
+            self.logger.removeHandler(handler)
 
-        self.logger.removeHandler(self.handler)
+        self.buffer.close()
 
 
 def run_action(type, args=None, kwargs=None, **extra):
@@ -102,6 +120,7 @@ def run_action(type, args=None, kwargs=None, **extra):
         output = action(*args, **kwargs)
     except Exception as e:
         logger.exception('Action failed')
+
         raise exceptions.CertificationError(str(e))
 
     return output
@@ -126,8 +145,8 @@ def run_validator(output, type, args=None, kwargs=None, **extra):
     return result
 
 
-def run_test(name, actions):
-    with LogCapture() as capture:
+def run_test(name, actions, cli_kwargs):
+    with LogCapture(cli_kwargs['debug']) as capture:
         test_results = {
             'name': name,
         }

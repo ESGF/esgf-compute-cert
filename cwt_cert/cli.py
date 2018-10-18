@@ -23,6 +23,7 @@ def cli():
 @click.argument('url')
 @click.option('--output', help='A path to output the results.')
 @click.option('--api-key', help='The CWT WPS api key.')
+@click.option('--debug', default=False, is_flag=True, help='Print logs to stdout.')
 def run(**kwargs):
     proc = multiprocessing.Process(target=runner.runner, kwargs=kwargs)
 

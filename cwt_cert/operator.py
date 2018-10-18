@@ -7,6 +7,7 @@ from cwt_cert import validators
 def build_operator_tests(url, api_key, **kwargs):
     operator = [
         {
+            'cli_kwargs': kwargs,
             'name': 'Aggregate',
             'actions': [
                 {

@@ -10,7 +10,6 @@ from cwt_cert import exceptions
 logging.getLogger('urllib3').setLevel(logging.DEBUG)
 
 logger = logging.getLogger('cwt_cert.actions')
-logger.propagate = True
 logger.setLevel(logging.DEBUG)
 
 WPS_CAPABILITIES = 'wps_capabilities_action'
@@ -30,7 +29,7 @@ def register(name):
 
 
 @register(WPS_EXECUTE)
-def wps_execute_action(url, identifier, inputs, api_key, domain=None,
+def wps_execute_action(url, identifier, api_key, inputs=None, domain=None,
                        parameters=None, *args, **kwargs):
     client = cwt.WPSClient(url, verify=False, api_key=api_key)
 
