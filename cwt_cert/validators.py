@@ -11,6 +11,7 @@ logger = logging.getLogger('cwt_cert.validators')
 logger.setLevel(logging.DEBUG)
 
 WPS_CAPABILITIES = 'wps_capabilities'
+CHECK_METRICS = 'check_metrics',
 CHECK_SHAPE = 'check_shape'
 
 SUCCESS = 'success'
@@ -27,6 +28,43 @@ def register(name):
         return func
     return wrapper
 
+
+def check_metrics_entry(metrics, name, value_type=None):
+    try:
+        value = metrics[name]
+    except KeyError as e:
+        msg = 'Metrics is missing key {!r}'.format(name)
+
+        raise exceptions.CertificationError(msg)
+
+    if type is not None and not isinstance(value, value_type):
+        if isinstance(value_type, tuple):
+            value_type = ', '.join(value_type)
+
+        msg = '{!r}\'s type {!r} does not match expected {!r}'.format(name,
+                                                                      type(value),
+                                                                      value_type)
+
+        raise exceptions.CertificationError(msg)
+
+    return value
+
+@register(CHECK_METRICS)
+def check_metrics(action_output):
+    metrics = action_output.get('output')
+
+    usage = check_metrics_entry(metrics, 'usage', dict)
+
+    check_metrics_entry(usage, 'files', dict)
+    check_metrics_entry(usage, 'output', float)
+    check_metrics_entry(usage, 'operators', dict)
+    check_metrics_entry(usage, 'local', float)
+    check_metrics_entry(usage, 'download', float)
+
+    health = check_metrics_entry(metrics, 'health', dict)
+
+    check_metrics_entry(metrics, 'time', (str, unicode))
+    
 
 @register(CHECK_SHAPE)
 def check_shape(action_output, shape):

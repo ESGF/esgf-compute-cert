@@ -43,22 +43,28 @@ def build_node_tests(url, api_key, **kwargs):
         #    'actions': [
         #    ],
         #},
-        #{
-        #    'cli_kwargs': kwargs,
-        #    'name': 'Metrics',
-        #    'actions': [
-        #        {
-        #            'type': actions.WPS_EXECUTE,
-        #            'args': [
-        #                url,
-        #            ],
-        #            'kwargs': {
-        #                'identifier': '.*\.metrics',
-        #                'api_key': api_key,
-        #            },
-        #        }
-        #    ],
-        #},
+        {
+            'cli_kwargs': kwargs,
+            'name': 'Metrics',
+            'actions': [
+                {
+                    'type': actions.WPS_EXECUTE,
+                    'args': [
+                        url,
+                    ],
+                    'kwargs': {
+                        'identifier': '.*\.metrics',
+                        'api_key': api_key,
+                    },
+                    'validations': [
+                        {
+                            'type': validators.CHECK_METRICS,
+                            'name': 'Check Metrics',
+                        }
+                    ],
+                }
+            ],
+        },
     ]
 
     return node
