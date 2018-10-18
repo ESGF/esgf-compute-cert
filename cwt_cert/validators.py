@@ -22,29 +22,34 @@ def check_shape(action_output, shape):
 
     logger.info('Opening %r', output.uri)
 
+    f = None
+
     try:
-        with cdms2.open(output.uri) as f:
-            logger.info('Reading shape of variable %r', output.var_name)
+        f = cdms2.open(output.uri)
+            
+        logger.info('Reading shape of variable %r', output.var_name)
 
-            try:
-                var_shape = f[output.var_name].shape
-            except AttributeError:
-                msg = 'Variable {!r} was not found in {!r}'.format(
-                    output.var_name, output.uri)
+        try:
+            var_shape = f[output.var_name].shape
+        except AttributeError:
+            msg = 'Variable {!r} was not found in {!r}'.format(
+                output.var_name, output.uri)
 
-                raise exceptions.CertificationError(msg)
+            raise exceptions.CertificationError(msg)
 
-            logger.info('Read shape of %r', var_shape)
+        logger.info('Read shape of %r', var_shape)
 
-            if var_shape != shape:
-                msg = 'Outputs shape {!r} does not match the '
-                'expected shape {!r}'.format(var_shape, shape)
+        if var_shape != shape:
+            msg = 'Outputs shape {!r} does not match the expected shape {!r}'.format(var_shape, shape)
 
-                raise exceptions.CertificationsError(msg)
+            raise exceptions.CertificationError(msg)
     except cdms2.CDMSError:
         msg = 'Failed to open {!r}'.format(output.uri)
         
         raise exceptions.CertificationError(msg)
+    finally:
+        if f is not None:
+            f.close()
 
     return 'Verified variable {!r} shape is {!r}'.format(
         output.var_name, shape)

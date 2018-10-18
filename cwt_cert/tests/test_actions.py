@@ -1,9 +1,12 @@
+import datetime
 import unittest
 
 import cwt
+import freezegun
 import mock
 
 from cwt_cert import actions
+from cwt_cert import exceptions
 
 
 class TestActions(unittest.TestCase):
@@ -35,20 +38,26 @@ class TestActions(unittest.TestCase):
             cwt.Variable('file:///test2.nc', 'tas'),
         ]
 
-        with self.assertRaises(actions.ActionError):
+        with self.assertRaises(exceptions.CertificationError):
             actions.wps_execute_action(url, aggregate, inputs, api_key)
 
     @mock.patch('cwt_cert.actions.cwt.WPSClient')
+    @freezegun.freeze_time()
     def test_wps_execute_action(self, mock_client):
         mock_process = mock.MagicMock(identifier='CDAT.aggregate')
 
-        type(mock_process).processing = mock.PropertyMock(side_effect=[True,
-                                                                       True,
-                                                                       False])
+        processing = [True, True, False]
 
-        output = cwt.Variable('file:///test_output.nc', 'tas')
+        type(mock_process).processing = mock.PropertyMock(side_effect=processing)
 
-        type(mock_process).output = mock.PropertyMock(return_value=output)
+        variable = cwt.Variable('file:///test_output.nc', 'tas')
+
+        output = {
+            'output': variable,
+            'elapsed': datetime.timedelta(0),
+        }
+
+        type(mock_process).output = mock.PropertyMock(return_value=variable)
 
         mock_client.return_value.get_capabilities.return_value.processes = [
             mock_process,
