@@ -12,8 +12,9 @@ logging.getLogger('urllib3').setLevel(logging.DEBUG)
 logger = logging.getLogger('cwt_cert.actions')
 logger.setLevel(logging.DEBUG)
 
-WPS_CAPABILITIES = 'wps_capabilities_action'
+WPS_EXECUTE_UNTIL_SUCCESS = 'wps_execution_success_action'
 WPS_EXECUTE = 'wps_execute_action'
+WPS_CAPABILITIES = 'wps_capabilities_action'
 
 REGISTRY = {}
 
@@ -26,6 +27,34 @@ def register(name):
         return func
 
     return wrapper
+
+
+@register(WPS_EXECUTE_UNTIL_SUCCESS)
+def wps_execute_success_action(url, api_key, inputs, *args, **kwargs):
+    domain = cwt.Domain(time=slice(0, 1))
+
+    client = cwt.WPSClient(url, verify=False, api_key=api_key)
+
+    process = client.processes('.*\.subset')[0]
+
+    result = None
+
+    logger.info('INPUTS %r', inputs)
+
+    for input in inputs:
+        try:
+            client.execute(process, inputs=[input], domain=domain)
+
+            if process.wait():
+                result = input
+
+                break
+        except Exception:
+            logger.exception('Error executing subset')
+
+            pass
+
+    return result
 
 
 @register(WPS_EXECUTE)

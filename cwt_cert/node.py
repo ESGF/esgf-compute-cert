@@ -38,11 +38,32 @@ def build_node_tests(url, api_key, **kwargs):
                 },
             ],
         },
-        #{
-        #    'name': 'Official Dataset',
-        #    'actions': [
-        #    ],
-        #},
+        {
+            'cli_kwargs': kwargs,
+            'name': 'Official Dataset',
+            'actions': [
+                {
+                    'type': actions.WPS_EXECUTE_UNTIL_SUCCESS,
+                    'args': [
+                        url,
+                    ],
+                    'kwargs': {
+                        'identifier': '.*\.subset',
+                        'api_key': api_key,
+                        'inputs': [
+                            cwt.Variable('https://dataserver.nccs.nasa.gov/thredds/dodsC/CMIP5/NASA/GISS/historical/E2-H_historical_r2i1p3/ccb_Amon_GISS-E2-H_historical_r2i1p3_185001-190012.nc',
+                                         'ccb'),
+                        ],
+                    },
+                    'validations': [
+                        {
+                            'type': validators.CHECK_IS_NOT_NONE,
+                            'name': 'Check Dataset access',
+                        }
+                    ],
+                }
+            ],
+        },
         {
             'cli_kwargs': kwargs,
             'name': 'Metrics',

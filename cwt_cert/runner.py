@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import cStringIO
+import datetime
 import json
 import logging
 import multiprocessing
@@ -27,6 +28,11 @@ def default(x):
         data = x.parameterize()
 
         data['_type'] = 'domain'
+    elif isinstance(x, datetime.timedelta):
+        data = {
+            '_type': 'timedelta',
+            'seconds': x.total_seconds(),
+        }
     else:
         raise TypeError(type(x))
 
@@ -36,11 +42,13 @@ def default(x):
 def object_hook(x):
     if '_type' in x:
         type = x.pop('_type')
-
+            
         if type == 'variable':
             x = cwt.Variable.from_dict(x)
         elif type == 'domain':
             x = cwt.Domain.from_dict(x)
+        elif type == 'timedelta':
+            x = datetime.timedelta(seconds=x['seconds'])
 
     return x
 
@@ -178,6 +186,8 @@ def run_test(name, actions, cli_kwargs):
                 act_item['result'] = validators.SUCCESS
 
                 print('{:<40}'.format(name))
+
+            logger.info('ACTION OUTPUT %r', output)
 
             assert 'validations' in act_item
 

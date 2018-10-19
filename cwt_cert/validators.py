@@ -10,9 +10,10 @@ from cwt_cert import exceptions
 logger = logging.getLogger('cwt_cert.validators')
 logger.setLevel(logging.DEBUG)
 
-WPS_CAPABILITIES = 'wps_capabilities'
-CHECK_METRICS = 'check_metrics',
+CHECK_IS_NOT_NONE = 'check_is_not_none'
+CHECK_METRICS = 'check_metrics'
 CHECK_SHAPE = 'check_shape'
+WPS_CAPABILITIES = 'wps_capabilities'
 
 SUCCESS = 'success'
 FAILURE = 'failure'
@@ -27,6 +28,14 @@ def register(name):
 
         return func
     return wrapper
+
+
+@register(CHECK_IS_NOT_NONE)
+def check_is_not_none(action_output):
+    if action_output is None:
+        raise exceptions.CertificationError('Action output was none')
+
+    return action_output
 
 
 def check_metrics_entry(metrics, name, value_type=None):
