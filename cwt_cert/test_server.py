@@ -1,6 +1,24 @@
 import cwt
 import pytest
 
+def test_metrics(context):
+    client = context.get_client_token()
+
+    process = client.processes('.*\.metrics')
+
+    assert len(process) > 0
+
+    process = process[0]
+
+    client.execute(process)
+
+    assert process.wait()
+
+    data = process.output
+
+    assert 'usage' in data
+    assert 'health' in data
+
 def test_security(context):
     # Check SSL
     # Check execute is protected
