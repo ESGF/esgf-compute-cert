@@ -1,6 +1,29 @@
 import cwt
 import pytest
 
+def test_stress(context):
+    client = context.get_client_token()
+
+    inputs = [
+        cwt.Variable('https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/pr/gn/v20181016/pr_Amon_amip_GISS-E2-1-G_r1i1p1f1_gn_185001-190012.nc', 'pr'),
+    ]
+
+    domain = cwt.Domain(time=(500, 1000))
+
+    active = []
+
+    for _ in range(4):
+        process = client.processes('.*\.subset')[0]
+
+        client.execute(process, inputs, domain)
+
+        active.append(process)
+
+    while len(active) > 0:
+        current = active.pop()
+
+        assert current.wait()
+
 def test_metrics(context):
     client = context.get_client_token()
 
