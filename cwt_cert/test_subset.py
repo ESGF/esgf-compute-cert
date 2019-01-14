@@ -20,7 +20,3 @@ class TestSubset(ProcessBase):
             'shape': (34, 4, 36, 49)
         }
     }
-
-    stress = {
-
-    }
