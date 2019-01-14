@@ -2,6 +2,7 @@
 
 import cdms2
 import cwt
+import datetime
 
 class ProcessBase(object):
     def get_inputs(self, data):
@@ -41,8 +42,12 @@ class ProcessBase(object):
 
         domain = self.get_domain(self.performance)
 
+        start = datetime.datetime.now()
+
         client.execute(process, inputs, domain)
 
-        assert process.wait()
+        assert process.wait(timeout=240)
+
+        elapsed = datetime.datetime.now() - start
 
         self.run_validations(process.output, self.performance)
