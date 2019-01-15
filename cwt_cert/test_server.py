@@ -1,19 +1,64 @@
 import cwt
 import pytest
 
+# subset
+# https://aims3.llnl.gov/thredds/catalog/esgcet/123/cmip3.IPSL.ipsl_cm4.historical.mon.atmos.run1.ta.v1.html#cmip3.IPSL.ipsl_cm4.historical.mon.atmos.run1.ta.v1
+# aggregate
+# https://aims3.llnl.gov/thredds/catalog/esgcet/122/cmip3.NCAR.ncar_ccsm3_0.historical.mon.atmos.run1.tas.v1.html#cmip3.NCAR.ncar_ccsm3_0.historical.mon.atmos.run1.tas.v1
+
 def test_stress(context):
     client = context.get_client_token()
 
-    inputs = [
-        cwt.Variable('https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/pr/gn/v20181016/pr_Amon_amip_GISS-E2-1-G_r1i1p1f1_gn_185001-190012.nc', 'pr'),
+    config = [
+        {
+            'identifier': '.*\.subset',
+            'variable': 'ta',
+            'inputs': [
+                'https://aims3.llnl.gov/thredds/dodsC/cmip3_data/data2/20c3m/atm/mo/ta/ipsl_cm4/run1/ta_A1_1860-2000.nc',
+            ],
+            'domain': {
+                'time': (0, 1000),
+            },
+        },
+        {
+            'identifier': '.*\.subset',
+            'variable': 'ta',
+            'inputs': [
+                'https://aims3.llnl.gov/thredds/dodsC/cmip3_data/data2/20c3m/atm/mo/ta/ipsl_cm4/run1/ta_A1_1860-2000.nc',
+            ],
+            'domain': {
+                'time': (5000, 6000),
+            },
+        },
+        {
+            'identifier': '.*\.aggregate',
+            'variable': 'tas',
+            'inputs': [
+                'https://aims3.llnl.gov/thredds/dodsC/cmip3_data/data2/20c3m/atm/mo/tas/ncar_ccsm3_0/run1/tas_A1.20C3M_1.CCSM.atmm.1870-01_cat_1879-12.nc',
+                'https://aims3.llnl.gov/thredds/dodsC/cmip3_data/data2/20c3m/atm/mo/tas/ncar_ccsm3_0/run1/tas_A1.20C3M_1.CCSM.atmm.1880-01_cat_1889-12.nc',
+            ],
+        },
+        {
+            'identifier': '.*\.aggregate',
+            'variable': 'tas',
+            'inputs': [
+                'https://aims3.llnl.gov/thredds/dodsC/cmip3_data/data2/20c3m/atm/mo/tas/ncar_ccsm3_0/run1/tas_A1.20C3M_1.CCSM.atmm.1980-01_cat_1989-12.nc',
+                'https://aims3.llnl.gov/thredds/dodsC/cmip3_data/data2/20c3m/atm/mo/tas/ncar_ccsm3_0/run1/tas_A1.20C3M_1.CCSM.atmm.1990-01_cat_1999-12.nc',
+            ],
+        },
     ]
-
-    domain = cwt.Domain(time=(500, 1000))
 
     active = []
 
-    for _ in range(4):
-        process = client.processes('.*\.subset')[0]
+    for data in config:
+        domain = None
+
+        if 'domain' in data:
+            domain = cwt.Domain(**data['domain'])
+
+        inputs = [cwt.Variable(x, data['variable']) for x in data['inputs']]
+
+        process = client.processes(data['identifier'])[0]
 
         client.execute(process, inputs, domain)
 
@@ -22,7 +67,7 @@ def test_stress(context):
     while len(active) > 0:
         current = active.pop()
 
-        assert current.wait()
+        assert current.wait(timeout=3*60)
 
 def test_metrics(context):
     client = context.get_client_token()
