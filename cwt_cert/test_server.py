@@ -69,6 +69,29 @@ def test_stress(context):
 
         assert current.wait(timeout=3*60)
 
+def test_api_compliance(context):
+    client = context.get_client_token()
+
+    process = client.processes('.*\.subset')[0]
+
+    inputs = [
+        cwt.Variable('https://aims3.llnl.gov/thredds/dodsC/cmip3_data/data2/20c3m/atm/mo/ta/ipsl_cm4/run1/ta_A1_1860-2000.nc', 'ta'),
+    ]
+
+    # Dimension by values
+    domain = cwt.Domain(time=(0, 30))
+
+    client.execute(process, inputs, domain)
+
+    assert process.wait(240)
+
+    # Dimension by indices
+    domain = cwt.Domain(time=slice(0, 2))
+
+    client.execute(process, inputs, domain)
+
+    assert process.wait(240)
+
 def test_metrics(context):
     client = context.get_client_token()
 
