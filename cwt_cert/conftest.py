@@ -4,6 +4,8 @@ import json
 import cwt
 import pytest
 
+pytest.register_assert_rewrite('cwt_cert.process_base')
+
 class Context(object):
     def __init__(self, host, token):
         self.host = host
@@ -27,15 +29,12 @@ class CWTCertificationReport(object):
         self.tests = collections.OrderedDict()
 
     @pytest.fixture
-    def context(self, request):
-        if self._context is None:
-            host = request.config.getoption('--host')
+    def context(target, request):
+        host = request.config.getoption('--host')
 
-            token = request.config.getoption('--token')
+        token = request.config.getoption('--token')
 
-            self._context = Context(host, token)
-
-        return self._context
+        return Context(host, token)
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item, call):
