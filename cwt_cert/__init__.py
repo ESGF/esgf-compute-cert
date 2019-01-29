@@ -8,4 +8,4 @@ def main():
 
     install_path = os.path.dirname(os.path.realpath(__file__))
 
-    pytest.main([install_path] + sys.argv[1:])
+    pytest.main([install_path, '-v'] + sys.argv[1:])
