@@ -4,6 +4,8 @@ import json
 import cwt
 import pytest
 
+pytest.register_assert_rewrite('cwt_cert.process_base')
+
 MARKERS = [
     'stress: mark a test as a stress test.',
     'performance: mark a test as a performance test.',
@@ -97,10 +99,6 @@ def pytest_addoption(parser):
     group.addoption('--host', help='target host to run tests on')
 
     group.addoption('--token', help='token to be used for api access')
-
-    group.addoption('--test', help='specify a test to run')
-
-    group.addoption('--list-tests', action='store_true', help='lists the available tests')
 
     group.addoption('--json-report-file', help='path to store json report')
 
