@@ -10,6 +10,7 @@ class Context(object):
     def __init__(self, host, token):
         self.host = host
         self.token = token
+        self.data_inputs = {}
 
     def get_client(self):
         client = cwt.WPSClient(self.host, verify=False)
@@ -21,6 +22,13 @@ class Context(object):
 
         return client
 
+    def set_data_inputs(self, request, variables, domain, operation):
+        client = self.get_client()
+
+        data_inputs = client.prepare_data_inputs(operation, variables, domain)
+
+        self.data_inputs[request.node._nodeid] = data_inputs
+
 class CWTCertificationReport(object):
     def __init__(self, config):
         self.config = config
@@ -29,12 +37,15 @@ class CWTCertificationReport(object):
         self.tests = collections.OrderedDict()
 
     @pytest.fixture
-    def context(target, request):
-        host = request.config.getoption('--host')
+    def context(self, request):
+        if self._context is None:
+            host = request.config.getoption('--host')
 
-        token = request.config.getoption('--token')
+            token = request.config.getoption('--token')
 
-        return Context(host, token)
+            self._context = Context(host, token)
+
+        return self._context
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item, call):
@@ -46,7 +57,13 @@ class CWTCertificationReport(object):
             self.tests[rep.nodeid] = {
                 'outcome': rep.outcome,
                 'longrepr': str(rep.longrepr),
+                'stdout': str(rep.capstdout),
+                'stderr': str(rep.capstderr),
+                'duration': rep.duration,
             }
+
+            if rep.nodeid in self._context.data_inputs:
+                self.tests[rep.nodeid]['data_inputs'] = self._context.data_inputs[rep.nodeid]
 
     def pytest_sessionfinish(self, session, exitstatus):
         json_report_file = self.config.getoption('--json-report-file', None)
