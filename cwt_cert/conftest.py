@@ -90,6 +90,10 @@ def pytest_addoption(parser):
 
     group.addoption('--token', required=True, help='token to be used for api access')
 
+    group.addoption('--test', help='specify a test to run')
+
+    group.addoption('--list-tests', action='store_true', help='lists the available tests')
+
     group.addoption('--json-report-file', help='path to store json report')
 
 def pytest_configure(config):
