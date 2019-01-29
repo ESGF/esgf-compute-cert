@@ -27,7 +27,10 @@ class Context(object):
 
         data_inputs = client.prepare_data_inputs(operation, variables, domain)
 
-        self.data_inputs[request.node._nodeid] = data_inputs
+        if request.node._nodeid in self.data_inputs:
+            self.data_inputs[request.node._nodeid].append(data_inputs) 
+        else:
+            self.data_inputs[request.node._nodeid] = [data_inputs]
 
 class CWTCertificationReport(object):
     def __init__(self, config):

@@ -33,7 +33,7 @@ class ProcessBase(object):
             if name.lower() == 'shape':
                 self.validate_shape(output, value)
 
-    def test_stress(self, context):
+    def test_stress(self, context, request):
         client = context.get_client_token()
 
         for current in self.stress:
@@ -47,6 +47,8 @@ class ProcessBase(object):
 
             current['process'] = process
 
+            context.set_data_inputs(request, inputs, domain, process)
+
         while len(self.stress) > 0:
             current = self.stress.pop()
 
@@ -54,7 +56,7 @@ class ProcessBase(object):
 
             self.run_validations(current['process'].output, current)
 
-    def test_performance(self, context):
+    def test_performance(self, context, request):
         client = context.get_client_token()
 
         process = client.processes('.*\.{!s}'.format(self.identifier))[0]
@@ -68,3 +70,5 @@ class ProcessBase(object):
         assert process.wait(timeout=20*60)
 
         self.run_validations(process.output, self.performance)
+
+        context.set_data_inputs(request, inputs, domain, process)
