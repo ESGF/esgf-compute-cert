@@ -2,7 +2,7 @@
 
 import cdms2
 import cwt
-import datetime
+import pytest
 
 class ProcessBase(object):
     def get_inputs(self, data):
@@ -33,6 +33,7 @@ class ProcessBase(object):
             if name.lower() == 'shape':
                 self.validate_shape(output, value)
 
+    @pytest.mark.stress
     def test_stress(self, context, request):
         client = context.get_client_token()
 
@@ -56,6 +57,7 @@ class ProcessBase(object):
 
             self.run_validations(current['process'].output, current)
 
+    @pytest.mark.performance
     def test_performance(self, context, request):
         client = context.get_client_token()
 
