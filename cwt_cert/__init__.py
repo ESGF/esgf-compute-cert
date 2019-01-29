@@ -2,6 +2,10 @@ import os
 
 os.environ['UVCDAT_ANONYMOUS_LOG'] = 'no'
 
+import pytest
+
+pytest.register_assert_rewrite('cwt_cert.process_base')
+
 tests = None
 
 if tests is None:

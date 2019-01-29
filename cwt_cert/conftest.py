@@ -4,8 +4,6 @@ import json
 import cwt
 import pytest
 
-pytest.register_assert_rewrite('cwt_cert.process_base')
-
 class Context(object):
     def __init__(self, host, token):
         self.host = host
