@@ -1,9 +1,11 @@
 import os
-import sys
 
 os.environ['UVCDAT_ANONYMOUS_LOG'] = 'no'
 
-import pytest
-
 def main():
-    pytest.main(['cwt_cert/', '-v'] + sys.argv)
+    import sys
+    import pytest
+
+    install_path = os.path.dirname(os.path.realpath(__file__))
+
+    pytest.main([install_path] + sys.argv[1:])

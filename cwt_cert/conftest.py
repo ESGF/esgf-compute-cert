@@ -41,14 +41,18 @@ class CWTCertificationReport(object):
 
     @pytest.fixture
     def context(self, request):
-        if self._context is None:
+        ctx = getattr(self, 'context', None)
+
+        if ctx is None:
             host = request.config.getoption('--host')
 
             token = request.config.getoption('--token')
 
-            self._context = Context(host, token)
+            ctx = Context(host, token)
 
-        return self._context
+            setattr(self, 'context', ctx)
+
+        return ctx
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item, call):

@@ -10,7 +10,7 @@ setup(
     url='https://github.com/ESGF/esgf-compute-cert',
     entry_points={
         'console_scripts': [
-            'cwt_cert = cwt_cert:main',
+            'cwt-cert=cwt_cert:main',
         ]
     },
 )
