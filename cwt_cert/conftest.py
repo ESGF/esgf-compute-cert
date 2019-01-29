@@ -4,6 +4,15 @@ import json
 import cwt
 import pytest
 
+MARKERS = [
+    'stress: mark a test as a stress test.',
+    'performance: mark a test as a performance test.',
+    'api_compliance: mark a test as an api compliance test.',
+    'metrics: mark a test as a metrics test.',
+    'security: mark a test as a security test.',
+    'operator: mark a test as an operator test.',
+]
+
 class Context(object):
     def __init__(self, host, token):
         self.host = host
@@ -101,6 +110,9 @@ def pytest_configure(config):
     config._cert_report = plugin
 
     config.pluginmanager.register(plugin)
+
+    for marker in MARKERS:
+        config.addinivalue_line('markers', marker)
 
 def pytest_unconfigure(config):
     plugin = getattr(config, '_cert_report', None)
