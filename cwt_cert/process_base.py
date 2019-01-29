@@ -33,44 +33,27 @@ class ProcessBase(object):
             if name.lower() == 'shape':
                 self.validate_shape(output, value)
 
-    @pytest.mark.stress
-    def test_stress(self, context, request):
-        client = context.get_client_token()
-
-        for current in self.stress:
-            process = client.processes('.*\.{!s}'.format(self.identifier))[0]
-
-            inputs = self.get_inputs(current)
-
-            domain = self.get_domain(current)
-
-            client.execute(process, inputs, domain)
-
-            current['process'] = process
-
-            context.set_data_inputs(request, inputs, domain, process)
-
-        while len(self.stress) > 0:
-            current = self.stress.pop()
-
-            assert current['process'].wait(timeout=20*60)
-
-            self.run_validations(current['process'].output, current)
-
-    @pytest.mark.performance
-    def test_performance(self, context, request):
+    def run_test(self, context, request, data):
         client = context.get_client_token()
 
         process = client.processes('.*\.{!s}'.format(self.identifier))[0]
 
-        inputs = self.get_inputs(self.performance)
+        inputs = self.get_inputs(data)
 
-        domain = self.get_domain(self.performance)
+        domain = self.get_domain(data)
 
         client.execute(process, inputs, domain)
 
         assert process.wait(timeout=20*60)
 
-        self.run_validations(process.output, self.performance)
+        self.run_validations(process.output, data)
 
         context.set_data_inputs(request, inputs, domain, process)
+
+    @pytest.mark.stress
+    def test_stress(self, context, request):
+        self.run_test(context, request, self.stress)
+
+    @pytest.mark.performance
+    def test_performance(self, context, request):
+        self.run_test(context, request, self.performance)
