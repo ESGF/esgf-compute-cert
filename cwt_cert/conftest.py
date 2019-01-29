@@ -56,9 +56,6 @@ class CWTCertificationReport(object):
     def from_config(cls, config):
         host = config.getoption('--host')
 
-        if host is None:
-            raise pytest.UsageError('Missing required --host argument')
-
         token = config.getoption('--token')
 
         return cls(config, host, token)
@@ -84,6 +81,10 @@ class CWTCertificationReport(object):
 
             if rep.nodeid in self._context.data_inputs:
                 self.tests[rep.nodeid]['data_inputs'] = self._context.data_inputs[rep.nodeid]
+
+    def pytest_sessionstart(self, session):
+        if self._context.host is None:
+            raise pytest.UsageError('Missing required parameter --host')
 
     def pytest_sessionfinish(self, session, exitstatus):
         json_report_file = self.config.getoption('--json-report-file', None)
