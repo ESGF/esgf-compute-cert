@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+import pytest
+
 from process_base import ProcessBase
 
 # Source THREDDS Catalogs
@@ -7,6 +9,7 @@ from process_base import ProcessBase
 # https://aims3.llnl.gov/thredds/catalog/esgcet/238/CMIP6.CMIP.NASA-GISS.GISS-E2-1-G.1pctCO2.r1i1p1f1.Amon.clt.gn.v20180905.html#CMIP6.CMIP.NASA-GISS.GISS-E2-1-G.1pctCO2.r1i1p1f1.Amon.clt.gn.v20180905
 # https://aims3.llnl.gov/thredds/catalog/esgcet/239/CMIP6.CMIP.NASA-GISS.GISS-E2-1-G.amip.r1i1p1f1.Amon.tas.gn.v20181016.html#CMIP6.CMIP.NASA-GISS.GISS-E2-1-G.amip.r1i1p1f1.Amon.tas.gn.v20181016
 
+@pytest.mark.subset
 class TestSubset(ProcessBase):
     identifier = 'subset'
 

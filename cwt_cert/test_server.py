@@ -7,6 +7,7 @@ import pytest
 # https://aims3.llnl.gov/thredds/catalog/esgcet/122/cmip3.NCAR.ncar_ccsm3_0.historical.mon.atmos.run1.tas.v1.html#cmip3.NCAR.ncar_ccsm3_0.historical.mon.atmos.run1.tas.v1
 
 @pytest.mark.stress
+@pytest.mark.server
 def test_stress(context):
     client = context.get_client_token()
 
@@ -71,6 +72,7 @@ def test_stress(context):
         assert current.wait(timeout=3*60)
 
 @pytest.mark.api_compliance
+@pytest.mark.server
 def test_api_compliance(context):
     client = context.get_client_token()
 
@@ -95,6 +97,7 @@ def test_api_compliance(context):
     assert process.wait(240)
 
 @pytest.mark.metrics
+@pytest.mark.server
 def test_metrics(context):
     client = context.get_client_token()
 
@@ -114,6 +117,7 @@ def test_metrics(context):
     assert 'health' in data
 
 @pytest.mark.security
+@pytest.mark.server
 def test_security(context):
     # Check SSL
     # Check execute is protected
@@ -132,6 +136,7 @@ def test_security(context):
         client.execute(process)
 
 @pytest.mark.operators
+@pytest.mark.server
 def test_official_operators(context):
     client = context.get_client()
 

@@ -13,6 +13,9 @@ MARKERS = [
     'metrics: mark a test as a metrics test.',
     'security: mark a test as a security test.',
     'operator: mark a test as an operator test.',
+    'server: mark a test as a server test.',
+    'aggregate: mark a test as an aggregate test.',
+    'subset: mark a test as a subset test.',
 ]
 
 class Context(object):
