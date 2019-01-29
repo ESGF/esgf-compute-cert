@@ -31,26 +31,27 @@ class Context(object):
             self.data_inputs[request.node._nodeid] = [data_inputs]
 
 class CWTCertificationReport(object):
-    def __init__(self, config):
+    def __init__(self, config, host, token):
         self.config = config
 
-        self._context = None
+        self._context = Context(host, token)
+
         self.tests = collections.OrderedDict()
 
-    @pytest.fixture
+    @classmethod
+    def from_config(cls, config):
+        host = config.getoption('--host')
+
+        if host is None:
+            raise pytest.UsageError('Missing required --host argument')
+
+        token = config.getoption('--token')
+
+        return cls(config, host, token)
+    
+    @pytest.fixture(scope='session')
     def context(self, request):
-        ctx = getattr(self, 'context', None)
-
-        if ctx is None:
-            host = request.config.getoption('--host')
-
-            token = request.config.getoption('--token')
-
-            ctx = Context(host, token)
-
-            setattr(self, 'context', ctx)
-
-        return ctx
+        return self._context
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item, call):
@@ -84,9 +85,9 @@ class CWTCertificationReport(object):
 def pytest_addoption(parser):
     group = parser.getgroup('cwt certification', 'cwt certification')
 
-    group.addoption('--host', required=True, help='target host to run tests on')
+    group.addoption('--host', help='target host to run tests on')
 
-    group.addoption('--token', required=True, help='token to be used for api access')
+    group.addoption('--token', help='token to be used for api access')
 
     group.addoption('--test', help='specify a test to run')
 
@@ -95,7 +96,7 @@ def pytest_addoption(parser):
     group.addoption('--json-report-file', help='path to store json report')
 
 def pytest_configure(config):
-    plugin = CWTCertificationReport(config)
+    plugin = CWTCertificationReport.from_config(config)
 
     config._cert_report = plugin
 
