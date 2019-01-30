@@ -2,21 +2,16 @@
 
 import pytest
 
-from process_base import ProcessBase
-
-# Source THREDDS Catalogs
-# https://aims3.llnl.gov/thredds/catalog/esgcet/239/CMIP6.CMIP.NASA-GISS.GISS-E2-1-G.amip.r1i1p1f1.Amon.ta.gn.v20181016.html#CMIP6.CMIP.NASA-GISS.GISS-E2-1-G.amip.r1i1p1f1.Amon.ta.gn.v20181016
-# https://aims3.llnl.gov/thredds/catalog/esgcet/238/CMIP6.CMIP.NASA-GISS.GISS-E2-1-G.1pctCO2.r1i1p1f1.Amon.clt.gn.v20180905.html#CMIP6.CMIP.NASA-GISS.GISS-E2-1-G.1pctCO2.r1i1p1f1.Amon.clt.gn.v20180905
-# https://aims3.llnl.gov/thredds/catalog/esgcet/239/CMIP6.CMIP.NASA-GISS.GISS-E2-1-G.amip.r1i1p1f1.Amon.tas.gn.v20181016.html#CMIP6.CMIP.NASA-GISS.GISS-E2-1-G.amip.r1i1p1f1.Amon.tas.gn.v20181016
+import process_base
 
 @pytest.mark.subset
-class TestSubset(ProcessBase):
-    identifier = 'subset'
+class TestSubset(process_base.ProcessBase):
+    identifier = '.*\.subset'
 
     performance = {
         'variable': 'ta',
         'files': [
-            'https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/ta/gn/v20181016/ta_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_185001-190012.nc',
+            process_base.TA[0],
         ],
         'domain': {
             'lat': (-45, 45),
@@ -32,7 +27,7 @@ class TestSubset(ProcessBase):
     stress = {
         'variable': 'ta',
         'files': [
-            'https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/ta/gn/v20181016/ta_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_185001-190012.nc',
+            process_base.TA[0],
         ],
         'domain': {
             'lat': (-45, 45),
