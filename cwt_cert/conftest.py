@@ -34,7 +34,7 @@ class Context(object):
 
         return client
 
-    def set_data_inputs(self, request, variables, domain, operation):
+    def set_data_inputs(self, request, variables, domain, operation, **kwargs):
         client = self.get_client()
 
         data_inputs = client.prepare_data_inputs(operation, variables, domain)

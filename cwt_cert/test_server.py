@@ -1,11 +1,72 @@
 import cwt
 import pytest
 
+import process_base
+
 @pytest.mark.stress
 @pytest.mark.server
-def test_stress(context):
+def test_stress(context, request):
+    jobs = [
+        {
+            'identifier': '.*\.subset',
+            'variable': 'clt',
+            'files': process_base.CLT[0:1],
+            'domain': {
+                'time': (1000, 10000),
+                'lat': (-45, 45),
+                'lon': (0, 180),
+            },
+            'validations': {
+                'shape': (296, 46, 72),
+            },
+        },
+        {
+            'identifier': '.*\.subset',
+            'variable': 'ta',
+            'files': process_base.TA[0:1],
+            'domain': {
+                'time': (1000, 10000),
+                'lat': (-45, 45),
+                'lon': (0, 180),
+                'plev': (50000, 10000),
+            },
+            'validations': {
+                'shape': (296, 7, 46, 72),
+            },
+        },
+        {
+            'identifier': '.*\.aggregate',
+            'variable': 'tas',
+            'files': process_base.TAS,
+            'domain': None,
+            'validations': {
+                'shape': (1980, 90, 144),
+            },
+        },
+        {
+            'identifier': '.*\.aggregate',
+            'variable': 'clt',
+            'files': process_base.CLT,
+            'domain': None,
+            'validations': {
+                'shape': (1812, 90, 144),
+            },
+        },
+    ]
+
+    base = process_base.ProcessBase()
+    
     client = context.get_client_token()
 
+    for item in jobs:
+        process = base.execute(context, request, client, **item)
+
+        item['process'] = process
+
+    for item in jobs:
+        assert item['process'].wait()
+
+        base.run_validations(item['process'].output, item['validations'])
 
 @pytest.mark.api_compliance
 @pytest.mark.server

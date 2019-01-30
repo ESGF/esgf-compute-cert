@@ -48,9 +48,7 @@ class ProcessBase(object):
             if name.lower() == 'shape':
                 self.validate_shape(output, value)
 
-    def run_test(self, context, request, identifier, files, variable, domain, validations):
-        client = context.get_client_token()
-
+    def execute(self, context, request, client, identifier, files, variable, domain, **kwargs):
         process = client.processes(identifier)[0]
 
         domain = None if domain is None else cwt.Domain(**domain)
@@ -59,11 +57,18 @@ class ProcessBase(object):
 
         client.execute(process, inputs, domain)
 
+        context.set_data_inputs(request, inputs, domain, process)
+
+        return process
+
+    def run_test(self, context, request, identifier, files, variable, domain, validations):
+        client = context.get_client_token()
+
+        process = self.execute(context, request, client, identifier, files, variable, domain)
+
         assert process.wait(timeout=20*60)
 
         self.run_validations(process.output, validations)
-
-        context.set_data_inputs(request, inputs, domain, process)
 
     @pytest.mark.stress
     def test_stress(self, context, request):
