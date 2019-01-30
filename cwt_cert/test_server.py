@@ -1,6 +1,8 @@
 import cwt
 import pytest
+from jsonschema import validate
 
+import metrics_schema
 import process_base
 
 @pytest.mark.stress
@@ -123,20 +125,13 @@ def test_api_compliance(context, request):
 def test_metrics(context):
     client = context.get_client_token()
 
-    process = client.processes('.*\.metrics')
-
-    assert len(process) > 0
-
-    process = process[0]
+    process = client.processes('.*\.metrics')[0]
 
     client.execute(process)
 
     assert process.wait()
 
-    data = process.output
-
-    assert 'usage' in data
-    assert 'health' in data
+    validate(instance=process.output, schema=metrics_schema.schema)
 
 @pytest.mark.security
 @pytest.mark.server
@@ -147,13 +142,9 @@ def test_security(context):
 
     client = context.get_client()
 
-    process = client.processes('.*\.metrics')
+    process = client.processes('.*\.metrics')[0]
 
-    assert len(process) > 0
-
-    process = process[0]
-
-    # Expect an error to be raised
+    # Expect an error to be raised no token provided
     with pytest.raises(cwt.WPSExceptionError):
         client.execute(process)
 
