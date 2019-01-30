@@ -6,7 +6,7 @@ import process_base
 @pytest.mark.stress
 @pytest.mark.server
 def test_stress(context, request):
-    jobs = [
+    test = [
         {
             'identifier': '.*\.subset',
             'variable': 'clt',
@@ -58,40 +58,65 @@ def test_stress(context, request):
     
     client = context.get_client_token()
 
-    for item in jobs:
+    for item in tests:
         process = base.execute(context, request, client, **item)
 
         item['process'] = process
 
-    for item in jobs:
-        assert item['process'].wait()
+    for item in tests:
+        assert item['process'].wait(20*60)
 
         base.run_validations(item['process'].output, item['validations'])
 
 @pytest.mark.api_compliance
 @pytest.mark.server
-def test_api_compliance(context):
-    client = context.get_client_token()
-
-    process = client.processes('.*\.subset')[0]
-
-    inputs = [
-        cwt.Variable('https://aims3.llnl.gov/thredds/dodsC/cmip3_data/data2/20c3m/atm/mo/ta/ipsl_cm4/run1/ta_A1_1860-2000.nc', 'ta'),
+def test_api_compliance(context, request):
+    tests = [
+        {
+            'identifier': '.*\.subset',
+            'variable': 'clt',
+            'files': process_base.CLT[0:1],
+            'domain': {
+                'time': slice(0, 100),
+            },
+            'validations': {
+                'shape': (100, 90, 144),
+            }
+        },
+        {
+            'identifier': '.*\.subset',
+            'variable': 'clt',
+            'files': process_base.CLT[0:1],
+            'domain': {
+                'time': (0, 100),
+            },
+            'validations': {
+                'shape': (3, 90, 144),
+            }
+        },
+        {
+            'identifier': '.*\.subset',
+            'variable': 'clt',
+            'files': process_base.CLT[0:1],
+            'domain': {
+                'time': ('1900-1-16 12:0:0.0', '1900-12-16 12:0:0.0'),
+            },
+            'validations': {
+                'shape': (12, 90, 144),
+            }
+        },
     ]
 
-    # Dimension by values
-    domain = cwt.Domain(time=(0, 30))
+    base = process_base.ProcessBase()
+    
+    client = context.get_client_token()
 
-    client.execute(process, inputs, domain)
+    for item in tests:
+        process = base.execute(context, request, client, **item)
 
-    assert process.wait(240)
+        assert process.wait(20*60)
 
-    # Dimension by indices
-    domain = cwt.Domain(time=slice(0, 2))
-
-    client.execute(process, inputs, domain)
-
-    assert process.wait(240)
+        base.run_validations(process.output, item['validations'])
 
 @pytest.mark.metrics
 @pytest.mark.server
