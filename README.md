@@ -11,13 +11,13 @@ conda install -c conda-forge -c cdat esgf-compute-cert
 
 ## Usage
 
-###### Simple
-The all test cases against the server.
+#### Simple
+Run all test cases against the server.
 ```
 cwt-cert --host https://aims2.llnl.gov/wps
 ```
 
-Pass a authorization token to the server.
+Pass an authorization token to the server.
 ```
 cwt-cert --host https://aims2.llnl.gov/wps --token abcd.1234
 ```
@@ -27,7 +27,7 @@ Create a result file.
 cwt-cert --host https://aims2.llnl.gov/wps --json-report-file result.json
 ```
 
-###### Markers
+#### Markers
 The tool is built on top of pytest which enables the filtering of which tests
 are run by passing marker expressions.
 
