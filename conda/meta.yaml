@@ -1,15 +1,13 @@
-{% set data = load_setup_py_data() %}
-
 package:
   name: esgf-compute-cert
-  version: {{ data.get('version') }}
+  version: "0.1.0"
 
 source:
   git_url: https://github.com/ESGF/esgf-compute-cert
-  git_rev: initial
+  git_rev: devel
 
 build:
-  number: 0
+  number: 1
   script: python setup.py install --single-version-externally-managed --record=record.txt
   noarch: python
 
@@ -22,7 +20,7 @@ requirements:
     - python
     - pytest
     - nomkl
-    - cdms2>=3.1
+    - cdms2>=3.1.0
     - esgf-compute-api=2.1.0
     - jsonschema
 
