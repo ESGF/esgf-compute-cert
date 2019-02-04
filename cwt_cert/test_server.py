@@ -8,7 +8,7 @@ import process_base
 @pytest.mark.stress
 @pytest.mark.server
 def test_stress(context, request):
-    test = [
+    tests = [
         {
             'identifier': '.*\.subset',
             'variable': 'clt',
