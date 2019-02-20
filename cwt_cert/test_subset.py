@@ -38,4 +38,4 @@ class TestSubset(process_base.ProcessBase):
         'validations': {
             'shape': (33, 4, 46, 72)
         }
-    },
+    }
