@@ -12,7 +12,7 @@ MARKERS = [
     'api_compliance: mark a test as an api compliance test.',
     'metrics: mark a test as a metrics test.',
     'security: mark a test as a security test.',
-    'operator: mark a test as an operator test.',
+    'operators: mark a test as an operators test.',
     'server: mark a test as a server test.',
     'aggregate: mark a test as an aggregate test.',
     'subset: mark a test as a subset test.',
