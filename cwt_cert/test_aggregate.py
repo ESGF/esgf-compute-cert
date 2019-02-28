@@ -13,7 +13,7 @@ class TestAggregate(process_base.ProcessBase):
         'files': process_base.CLT,
         'domain': None,
         'validations': {
-            'shape': (1980, 90, 144),
+            'shape': (1812, 90, 144),
         }
     }
     
