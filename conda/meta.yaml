@@ -25,6 +25,10 @@ requirements:
     - esgf-compute-api=devel
     - jsonschema
 
+test:
+  commands:
+    - cwt-cert -h
+
 about:
   home: https://github.com/ESGF/esgf-compute-cert
   summary: tool to certify ESGF compute servers
