@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import cwt
 import pytest
 from jsonschema import validate
 
-import metrics_schema
-import process_base
+from . import metrics_schema
+from . import process_base
 
 @pytest.mark.stress
 @pytest.mark.server

@@ -1,8 +1,9 @@
 #! /usr/bin/env python
 
+from __future__ import absolute_import
 import pytest
 
-import process_base
+from . import process_base
 
 @pytest.mark.aggregate
 class TestAggregate(process_base.ProcessBase):

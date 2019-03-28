@@ -3,12 +3,11 @@ package:
   version: {{ environ.get('PACKAGE_VERSION', 'devel') }}
 
 source:
-  git_rev: {{ environ.get('GIT_BRANCH', 'devel') }}
-  git_url: ../
+  path: ../
 
 build:
-  string: py{{ PY_VER }}_{{ GIT_FULL_HASH|truncate(8, False, '') }}
-  script: python setup.py install --single-version-externally-managed --record=record.txt
+  number: {{ environ.get('BUILD_NUMBER', 0) }}
+  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed --no-cache-dir -vvv"
   noarch: python
 
 requirements:
@@ -23,7 +22,7 @@ requirements:
     - pytest
     - nomkl
     - cdms2>=3.1.0
-    - esgf-compute-api=2.1.0
+    - esgf-compute-api=devel
     - jsonschema
 
 about:

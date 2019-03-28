@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+from builtins import object
 import cdms2
 import cwt
 import pytest
@@ -44,7 +45,7 @@ class ProcessBase(object):
         assert output_shape == expected_shape
 
     def run_validations(self, output, validations):
-        for name, value in validations.iteritems():
+        for name, value in list(validations.items()):
             if name.lower() == 'shape':
                 self.validate_shape(output, value)
 
