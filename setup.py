@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='cwt-certification',
+    name='cwt-cert',
     description='Certification tool for Official ESGF Compute nodes',
     packages=['cwt_cert'],
     author='Jason Boutte',
