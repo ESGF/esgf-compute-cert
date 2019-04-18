@@ -27,12 +27,12 @@ class Context(object):
         self.data_inputs = {}
 
     def get_client(self):
-        client = cwt.WPSClient(self.host, verify=False)
+        client = cwt.WPSClient(self.host)
 
         return client
 
     def get_client_token(self):
-        client = cwt.WPSClient(self.host, api_key=self.token, verify=False)
+        client = cwt.WPSClient(self.host, api_key=self.token)
 
         return client
 
