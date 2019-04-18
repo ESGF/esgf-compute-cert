@@ -146,7 +146,7 @@ def test_security(context):
     process = client.processes('.*\\.metrics')[0]
 
     # Expect an error to be raised no token provided
-    with pytest.raises(cwt.WPSExceptionError):
+    with pytest.raises(cwt.WPSClientError):
         client.execute(process)
 
 @pytest.mark.operators
