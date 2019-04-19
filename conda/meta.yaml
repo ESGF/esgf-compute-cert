@@ -26,6 +26,14 @@ requirements:
     - jsonschema
 
 test:
+  imports:
+    - cwt_cert
+    - cwt_cert.conftest
+    - cwt_cert.process_base
+    - cwt_cert.test_server
+    - cwt_cert.test_subset
+    - cwt_cert.test_aggregate
+
   commands:
     - cwt-cert -h
 
