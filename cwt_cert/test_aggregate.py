@@ -7,7 +7,7 @@ from . import process_base
 
 @pytest.mark.aggregate
 class TestAggregate(process_base.ProcessBase):
-    identifier = '.*\\.aggregate'
+    identifier = 'aggregate'
 
     performance = {
         'variable': 'clt',

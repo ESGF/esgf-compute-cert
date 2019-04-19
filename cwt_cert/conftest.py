@@ -21,10 +21,38 @@ MARKERS = [
 ]
 
 class Context(object):
-    def __init__(self, host, token):
-        self.host = host
-        self.token = token
+    def __init__(self, config):
+        self.config = config
         self.data_inputs = {}
+
+    @property
+    def host(self):
+        return self.config.getoption('--host')
+
+    @property
+    def token(self):
+        return self.config.getoption('--token')
+
+    @property
+    def module(self):
+        return self.config.getoption('--module')
+
+    @property
+    def module_metrics(self):
+        value = self.config.getoption('--module-metrics')
+
+        # Default to the module option
+        if value is None:
+            return self.config.getoption('--module')
+
+        return value
+
+    @property
+    def metrics_identifier(self):
+        return '{!s}.metrics'.format(self.module_metrics) 
+
+    def format_identifier(self, operation):
+        return '{!s}.{!s}'.format(self.module, operation)
 
     def get_client(self):
         client = cwt.WPSClient(self.host)
@@ -47,20 +75,16 @@ class Context(object):
             self.data_inputs[request.node._nodeid] = [data_inputs]
 
 class CWTCertificationReport(object):
-    def __init__(self, config, host, token):
+    def __init__(self, config):
         self.config = config
 
-        self._context = Context(host, token)
+        self._context = Context(config)
 
         self.tests = collections.OrderedDict()
 
     @classmethod
     def from_config(cls, config):
-        host = config.getoption('--host')
-
-        token = config.getoption('--token')
-
-        return cls(config, host, token)
+        return cls(config)
     
     @pytest.fixture(scope='session')
     def context(self, request):
@@ -88,6 +112,9 @@ class CWTCertificationReport(object):
         if self._context.host is None:
             raise pytest.UsageError('Missing required parameter --host')
 
+        if self._context.module is None:
+            raise pytest.UsageError('Missing required parameter --module')
+
     def pytest_sessionfinish(self, session, exitstatus):
         json_report_file = self.config.getoption('--json-report-file', None)
 
@@ -105,6 +132,10 @@ def pytest_addoption(parser):
     group.addoption('--host', help='target host to run tests on')
 
     group.addoption('--token', help='token to be used for api access')
+
+    group.addoption('--module', help='name of the module to be tested')
+
+    group.addoption('--module-metrics', default=None, help='name of the metrics module, this may differ from the target module')
 
     group.addoption('--json-report-file', help='path to store json report')
 

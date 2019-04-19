@@ -50,7 +50,11 @@ class ProcessBase(object):
                 self.validate_shape(output, value)
 
     def execute(self, context, request, client, identifier, files, variable, domain, **kwargs):
-        process = client.processes(identifier)[0]
+        identifier = context.format_identifier(identifier)
+        
+        process = client.process_by_name(identifier)
+
+        assert process is not None, 'Missing process {!r}'.format(identifier)
 
         domain = None if domain is None else cwt.Domain(**domain)
 

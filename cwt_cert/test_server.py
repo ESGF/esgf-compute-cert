@@ -11,7 +11,7 @@ from . import process_base
 def test_stress(context, request):
     tests = [
         {
-            'identifier': '.*\\.subset',
+            'identifier': 'subset',
             'variable': 'clt',
             'files': process_base.CLT[0:1],
             'domain': {
@@ -24,7 +24,7 @@ def test_stress(context, request):
             },
         },
         {
-            'identifier': '.*\\.subset',
+            'identifier': 'subset',
             'variable': 'ta',
             'files': process_base.TA[0:1],
             'domain': {
@@ -38,7 +38,7 @@ def test_stress(context, request):
             },
         },
         {
-            'identifier': '.*\\.aggregate',
+            'identifier': 'aggregate',
             'variable': 'tas',
             'files': process_base.TAS,
             'domain': None,
@@ -47,7 +47,7 @@ def test_stress(context, request):
             },
         },
         {
-            'identifier': '.*\\.aggregate',
+            'identifier': 'aggregate',
             'variable': 'clt',
             'files': process_base.CLT,
             'domain': None,
@@ -76,7 +76,7 @@ def test_stress(context, request):
 def test_api_compliance(context, request):
     tests = [
         {
-            'identifier': '.*\\.subset',
+            'identifier': 'subset',
             'variable': 'clt',
             'files': process_base.CLT[0:1],
             'domain': {
@@ -87,7 +87,7 @@ def test_api_compliance(context, request):
             }
         },
         {
-            'identifier': '.*\\.subset',
+            'identifier': 'subset',
             'variable': 'clt',
             'files': process_base.CLT[0:1],
             'domain': {
@@ -98,7 +98,7 @@ def test_api_compliance(context, request):
             }
         },
         {
-            'identifier': '.*\\.subset',
+            'identifier': 'subset',
             'variable': 'clt',
             'files': process_base.CLT[0:1],
             'domain': {
@@ -126,7 +126,9 @@ def test_api_compliance(context, request):
 def test_metrics(context):
     client = context.get_client_token()
 
-    process = client.processes('.*\\.metrics')[0]
+    process = client.process_by_name(context.metrics_identifier)
+
+    assert process is not None, 'Missing metrics operation'
 
     client.execute(process)
 
@@ -137,13 +139,11 @@ def test_metrics(context):
 @pytest.mark.security
 @pytest.mark.server
 def test_security(context):
-    # Check SSL
-    # Check execute is protected
-    # ?
-
     client = context.get_client()
 
-    process = client.processes('.*\\.metrics')[0]
+    process = client.process_by_name(context.metrics_identifier)
+
+    assert process is not None, 'Missing metrics operation'
 
     # Expect an error to be raised no token provided
     with pytest.raises(cwt.WPSClientError):
@@ -154,11 +154,17 @@ def test_security(context):
 def test_official_operators(context):
     client = context.get_client()
 
-    expected = set(['aggregate', 'subset', 'metrics'])
+    found = set()
+    expected = set([
+        context.format_identifier('subset'),
+        context.format_identifier('aggregate'),
+        context.metrics_identifier,
+    ])
 
-    for method in expected:
-        process = client.processes('.*\\.{!s}'.format(method))
+    for identifier in expected:
+        process = client.process_by_name(identifier)
 
-        assert len(process) > 0
+        if process is not None:
+            found.add(process.identifier)
 
-        assert method in process[0].identifier
+    assert found == expected, 'Missing expected operations'
