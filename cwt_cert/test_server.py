@@ -73,57 +73,6 @@ def test_stress(context, request):
         base.run_validations(item['process'].output, item['validations'])
 
 
-@pytest.mark.api_compliance
-@pytest.mark.server
-def test_api_compliance(context, request):
-    tests = [
-        {
-            'identifier': 'subset',
-            'variable': 'clt',
-            'files': process_base.CLT[0:1],
-            'domain': {
-                'time': slice(0, 100),
-            },
-            'validations': {
-                'shape': (100, 90, 144),
-            }
-        },
-        {
-            'identifier': 'subset',
-            'variable': 'clt',
-            'files': process_base.CLT[0:1],
-            'domain': {
-                'time': (0, 100),
-            },
-            'validations': {
-                'shape': (3, 90, 144),
-            }
-        },
-        {
-            'identifier': 'subset',
-            'variable': 'clt',
-            'files': process_base.CLT[0:1],
-            'domain': {
-                'time': ('1900-1-16 12:0:0.0', '1900-12-16 12:0:0.0'),
-            },
-            'validations': {
-                'shape': (12, 90, 144),
-            }
-        },
-    ]
-
-    base = process_base.ProcessBase()
-
-    client = context.get_client_token()
-
-    for item in tests:
-        process = base.execute(context, request, client, **item)
-
-        assert process.wait(20*60)
-
-        base.run_validations(process.output, item['validations'])
-
-
 @pytest.mark.metrics
 @pytest.mark.server
 def test_metrics(context):

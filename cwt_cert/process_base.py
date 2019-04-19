@@ -78,9 +78,13 @@ class ProcessBase(object):
 
         self.run_validations(process.output, validations)
 
-    @pytest.mark.stress
-    def test_stress(self, context, request):
-        self.run_test(context, request, self.identifier, **self.stress)
+    def run_multiple_tests(self, context, request, identifier, tests):
+        for test in tests:
+            self.run_test(context, request, identifier, **test)
+
+    @pytest.mark.api_compliance
+    def test_api_compliance(self, context, request):
+        self.run_multiple_tests(context, request, self.identifier, self.api_compliance)
 
     @pytest.mark.performance
     def test_performance(self, context, request):

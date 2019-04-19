@@ -10,20 +10,44 @@ from . import process_base
 class TestAggregate(process_base.ProcessBase):
     identifier = 'aggregate'
 
+    api_compliance = [
+        {
+            'variable': 'ta',
+            'files': process_base.TA[:2],
+            'domain': {
+                'time': slice(300, 912),
+            },
+            'validations': {
+                'shape': (612, 19, 90, 144)
+            }
+        },
+        {
+            'variable': 'ta',
+            'files': process_base.TA[:2],
+            'domain': {
+                'time': (2144.0, 25838.5),
+            },
+            'validations': {
+                'shape': (167, 19, 90, 144)
+            }
+        },
+        {
+            'variable': 'ta',
+            'files': process_base.TA[:2],
+            'domain': {
+                'time': ('1854-1-16 12:0:0.0', '1910-12-16 12:0:0.0'),
+            },
+            'validations': {
+                'shape': (71, 19, 90, 144)
+            }
+        },
+    ]
+
     performance = {
         'variable': 'clt',
         'files': process_base.CLT,
         'domain': None,
         'validations': {
             'shape': (1812, 90, 144),
-        }
-    }
-
-    stress = {
-        'variable': 'ta',
-        'files': process_base.TA,
-        'domain': None,
-        'validations': {
-            'shape': (1980, 19, 90, 144),
         }
     }
