@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+# flake8: noqa: E501
+
 from builtins import object
 import cdms2
 import cwt
@@ -37,6 +39,7 @@ CLT = [
 
 CLT_SIZE = (1812, 90, 144)
 
+
 class ProcessBase(object):
     def validate_shape(self, output, expected_shape):
         with cdms2.open(output.uri) as infile:
@@ -51,7 +54,7 @@ class ProcessBase(object):
 
     def execute(self, context, request, client, identifier, files, variable, domain, **kwargs):
         identifier = context.format_identifier(identifier)
-        
+
         process = client.process_by_name(identifier)
 
         assert process is not None, 'Missing process {!r}'.format(identifier)

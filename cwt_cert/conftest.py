@@ -20,6 +20,7 @@ MARKERS = [
     'subset: mark a test as a subset test.',
 ]
 
+
 class Context(object):
     def __init__(self, config):
         self.config = config
@@ -49,7 +50,7 @@ class Context(object):
 
     @property
     def metrics_identifier(self):
-        return '{!s}.metrics'.format(self.module_metrics) 
+        return '{!s}.metrics'.format(self.module_metrics)
 
     def format_identifier(self, operation):
         return '{!s}.{!s}'.format(self.module, operation)
@@ -70,9 +71,10 @@ class Context(object):
         data_inputs = client.prepare_data_inputs(operation, variables, domain)
 
         if request.node._nodeid in self.data_inputs:
-            self.data_inputs[request.node._nodeid].append(data_inputs) 
+            self.data_inputs[request.node._nodeid].append(data_inputs)
         else:
             self.data_inputs[request.node._nodeid] = [data_inputs]
+
 
 class CWTCertificationReport(object):
     def __init__(self, config):
@@ -85,7 +87,7 @@ class CWTCertificationReport(object):
     @classmethod
     def from_config(cls, config):
         return cls(config)
-    
+
     @pytest.fixture(scope='session')
     def context(self, request):
         return self._context
@@ -126,6 +128,7 @@ class CWTCertificationReport(object):
             with open(json_report_file, 'w') as outfile:
                 json.dump(report, outfile, indent=True)
 
+
 def pytest_addoption(parser):
     group = parser.getgroup('cwt certification', 'cwt certification')
 
@@ -135,9 +138,11 @@ def pytest_addoption(parser):
 
     group.addoption('--module', help='name of the module to be tested')
 
-    group.addoption('--module-metrics', default=None, help='name of the metrics module, this may differ from the target module')
+    group.addoption('--module-metrics', default=None, help='name of the metrics module, this may differ from the '
+                    'target module')
 
     group.addoption('--json-report-file', help='path to store json report')
+
 
 def pytest_configure(config):
     plugin = CWTCertificationReport.from_config(config)
@@ -148,6 +153,7 @@ def pytest_configure(config):
 
     for marker in MARKERS:
         config.addinivalue_line('markers', marker)
+
 
 def pytest_unconfigure(config):
     plugin = getattr(config, '_cert_report', None)

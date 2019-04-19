@@ -6,6 +6,7 @@ from jsonschema import validate
 from . import metrics_schema
 from . import process_base
 
+
 @pytest.mark.stress
 @pytest.mark.server
 def test_stress(context, request):
@@ -58,7 +59,7 @@ def test_stress(context, request):
     ]
 
     base = process_base.ProcessBase()
-    
+
     client = context.get_client_token()
 
     for item in tests:
@@ -70,6 +71,7 @@ def test_stress(context, request):
         assert item['process'].wait(20*60)
 
         base.run_validations(item['process'].output, item['validations'])
+
 
 @pytest.mark.api_compliance
 @pytest.mark.server
@@ -111,7 +113,7 @@ def test_api_compliance(context, request):
     ]
 
     base = process_base.ProcessBase()
-    
+
     client = context.get_client_token()
 
     for item in tests:
@@ -120,6 +122,7 @@ def test_api_compliance(context, request):
         assert process.wait(20*60)
 
         base.run_validations(process.output, item['validations'])
+
 
 @pytest.mark.metrics
 @pytest.mark.server
@@ -136,6 +139,7 @@ def test_metrics(context):
 
     validate(instance=process.output, schema=metrics_schema.schema)
 
+
 @pytest.mark.security
 @pytest.mark.server
 def test_security(context):
@@ -148,6 +152,7 @@ def test_security(context):
     # Expect an error to be raised no token provided
     with pytest.raises(cwt.WPSClientError):
         client.execute(process)
+
 
 @pytest.mark.operators
 @pytest.mark.server

@@ -5,6 +5,7 @@ import pytest
 
 from . import process_base
 
+
 @pytest.mark.subset
 class TestSubset(process_base.ProcessBase):
     identifier = 'subset'

@@ -5,6 +5,7 @@ import pytest
 
 from . import process_base
 
+
 @pytest.mark.aggregate
 class TestAggregate(process_base.ProcessBase):
     identifier = 'aggregate'
@@ -17,7 +18,7 @@ class TestAggregate(process_base.ProcessBase):
             'shape': (1812, 90, 144),
         }
     }
-    
+
     stress = {
         'variable': 'ta',
         'files': process_base.TA,
