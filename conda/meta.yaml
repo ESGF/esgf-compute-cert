@@ -1,14 +1,16 @@
+{% set data = load_setup_py_data() %}
+
 package:
   name: esgf-compute-cert
-  version: {{ environ.get('PACKAGE_VERSION', 'devel') }}
+  version: {{ data.get('version') }}
 
 source:
   path: ../
 
 build:
-  number: {{ environ.get('BUILD_NUMBER', 0) }}
   script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed --no-cache-dir -vvv"
   noarch: python
+  number: {{ environ.get('BUILD_NUMBER', 0) }}
 
 requirements:
   build:
@@ -19,11 +21,12 @@ requirements:
 
   run:
     - python
-    - pytest
-    - nomkl
-    - cdms2>=3.1.0
-    - esgf-compute-api=devel
-    - jsonschema
+    - pytest=4.5.0
+    - nomkl=3.0
+    - cdms2=3.1.2
+    - libnetcdf=4.6.2
+    - esgf-compute-api={{ data.get('version') }}
+    - jsonschema=3.0.1
 
 test:
   imports:
