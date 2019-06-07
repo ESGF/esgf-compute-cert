@@ -28,7 +28,7 @@ class TestAggregate(test_base.TestBase):
                 'time': (2144.0, 25838.5),
             },
             'validations': {
-                'shape': (167, 19, 90, 144)
+                'shape': (779, 19, 90, 144)
             }
         },
         {
@@ -38,7 +38,7 @@ class TestAggregate(test_base.TestBase):
                 'time': ('1854-1-16 12:0:0.0', '1910-12-16 12:0:0.0'),
             },
             'validations': {
-                'shape': (71, 19, 90, 144)
+                'shape': (684, 19, 90, 144)
             }
         },
     ]
