@@ -3,17 +3,17 @@
 from __future__ import absolute_import
 import pytest
 
-from . import process_base
+from cwt_cert import test_base
 
 
 @pytest.mark.aggregate
-class TestAggregate(process_base.ProcessBase):
+class TestAggregate(test_base.TestBase):
     identifier = 'aggregate'
 
     api_compliance = [
         {
             'variable': 'ta',
-            'files': process_base.TA[:2],
+            'files': test_base.TA[:2],
             'domain': {
                 'time': slice(300, 912),
             },
@@ -23,7 +23,7 @@ class TestAggregate(process_base.ProcessBase):
         },
         {
             'variable': 'ta',
-            'files': process_base.TA[:2],
+            'files': test_base.TA[:2],
             'domain': {
                 'time': (2144.0, 25838.5),
             },
@@ -33,7 +33,7 @@ class TestAggregate(process_base.ProcessBase):
         },
         {
             'variable': 'ta',
-            'files': process_base.TA[:2],
+            'files': test_base.TA[:2],
             'domain': {
                 'time': ('1854-1-16 12:0:0.0', '1910-12-16 12:0:0.0'),
             },
@@ -45,7 +45,7 @@ class TestAggregate(process_base.ProcessBase):
 
     performance = {
         'variable': 'clt',
-        'files': process_base.CLT,
+        'files': test_base.CLT,
         'domain': None,
         'validations': {
             'shape': (1812, 90, 144),

@@ -3,8 +3,8 @@ import cwt
 import pytest
 from jsonschema import validate
 
-from . import metrics_schema
-from . import process_base
+from cwt_cert import metrics_schema
+from cwt_cert import test_base
 
 
 @pytest.mark.stress
@@ -14,7 +14,7 @@ def test_stress(context, request):
         {
             'identifier': 'subset',
             'variable': 'clt',
-            'files': process_base.CLT[0:1],
+            'files': test_base.CLT[0:1],
             'domain': {
                 'time': (1000, 10000),
                 'lat': (-45, 45),
@@ -27,7 +27,7 @@ def test_stress(context, request):
         {
             'identifier': 'subset',
             'variable': 'ta',
-            'files': process_base.TA[0:1],
+            'files': test_base.TA[0:1],
             'domain': {
                 'time': (1000, 10000),
                 'lat': (-45, 45),
@@ -41,7 +41,7 @@ def test_stress(context, request):
         {
             'identifier': 'aggregate',
             'variable': 'tas',
-            'files': process_base.TAS,
+            'files': test_base.TAS,
             'domain': None,
             'validations': {
                 'shape': (1980, 90, 144),
@@ -50,7 +50,7 @@ def test_stress(context, request):
         {
             'identifier': 'aggregate',
             'variable': 'clt',
-            'files': process_base.CLT,
+            'files': test_base.CLT,
             'domain': None,
             'validations': {
                 'shape': (1812, 90, 144),
@@ -58,7 +58,7 @@ def test_stress(context, request):
         },
     ]
 
-    base = process_base.ProcessBase()
+    base = test_base.TestBase()
 
     client = context.get_client_token()
 

@@ -40,7 +40,7 @@ CLT = [
 CLT_SIZE = (1812, 90, 144)
 
 
-class ProcessBase(object):
+class TestBase(object):
     def validate_shape(self, output, expected_shape):
         with cdms2.open(output.uri) as infile:
             output_shape = infile[output.var_name].shape
