@@ -76,20 +76,13 @@ def test_stress(context, request):
         item['process'] = process
 
     for item in tests:
-        assert item['process'].wait(20*60)
-
-        for validation in item['validations']:
-            try:
-                validation(context, item['files'], item['variable'], item['domain'], item['process'].output)
-            except test_base.ValidationError as e:
-                context.set_validation_result(request, item['name'], validation.__name__, str(e))
-            else:
-                context.set_validation_result(request, item['name'], validation.__name__, 'success')
+        base.validate(context, request, item['process'], item['name'], item['files'], item['variable'], item['domain'],
+                      item['validations'])
 
 
 @pytest.mark.metrics
 @pytest.mark.server
-def test_metrics(context):
+def test_metrics(context, request):
     client = context.get_client_token()
 
     process = client.process_by_name(context.metrics_identifier)
@@ -98,9 +91,14 @@ def test_metrics(context):
 
     client.execute(process)
 
-    assert process.wait()
+    with test_base.Timing() as timing:
+        assert process.wait()
+
+    context.set_extra(request, 'timing', 'metrics', timing.elapsed)
 
     validate(instance=process.output, schema=metrics_schema.schema)
+
+    context.set_extra(request, 'output', 'metrics', process.output)
 
 
 @pytest.mark.security
@@ -119,7 +117,7 @@ def test_security(context):
 
 @pytest.mark.operators
 @pytest.mark.server
-def test_official_operators(context):
+def test_official_operators(context, request):
     client = context.get_client()
 
     found = set()
@@ -136,3 +134,5 @@ def test_official_operators(context):
             found.add(process.identifier)
 
     assert found == expected, 'Missing expected operations'
+
+    context.set_extra(request, 'operators', 'verified', list(found))

@@ -4,6 +4,7 @@
 
 import contextlib
 import random
+import time
 from builtins import object
 from collections import OrderedDict
 
@@ -41,6 +42,23 @@ CLT = [
     'https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_195101-200012.nc',
 ]
 
+
+class Timing(object):
+    def __init__(self):
+        self.start = None
+        self.stop = None
+
+    @property
+    def elapsed(self):
+        return self.stop - self.start
+
+    def __enter__(self):
+        self.start = time.time()
+
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.stop = time.time()
 
 class ValidationError(Exception):
     def __init__(self, fmt, *args, **kwargs):
@@ -155,7 +173,7 @@ def validate_axes(context, files, variable, domain, output):
 
                     axes.append(axis_data.subAxis(mapped[0], mapped[1], step or 1))
 
-            remote = staks.enter_context(cdms2.open(output.uri))
+            remote = stack.enter_context(cdms2.open(output.uri))
 
             output_shape = remote[output.var_name].shape
 
@@ -181,24 +199,44 @@ class TestBase(object):
 
         client.execute(process, inputs, domain)
 
-        context.set_data_inputs(request, name, inputs, domain, process)
+        variable, domain, operation = client.prepare_data_inputs(process, inputs, domain)
+
+        data_inputs = {
+            'variable': variable,
+            'domain': domain,
+            'operation': operation,
+        }
+
+        context.set_extra(request, 'data_inputs', name, data_inputs)
 
         return process
+
+    def validate(self, context, request, process, name, files, variable, domain, validations):
+        with Timing() as timing:
+            assert process.wait(timeout=20*60)
+
+        context.set_extra(request, 'timing', name, timing.elapsed)
+
+        validation_result = {}
+
+        for validation in validations:
+            try:
+                validation(context, files, variable, domain, process.output)
+            except ValidationError as e:
+                result = str(e)
+            else:
+                result = 'success'
+
+            validation_result[validation.__name__] = result
+
+        context.set_extra(request, 'validation_result', name, validation_result)
 
     def run_test(self, context, request, identifier, name, files, variable, domain, validations):
         client = context.get_client_token()
 
         process = self.execute(context, request, client, identifier, name, files, variable, domain)
 
-        assert process.wait(timeout=20*60)
-
-        for validation in validations:
-            try:
-                validation(context, files, variable, domain, process.output)
-            except ValidationError as e:
-                context.set_validation_result(request, name, validation.__name__, str(e))
-            else:
-                context.set_validation_result(request, name, validation.__name__, 'success')
+        self.validate(context, request, process, name, files, variable, domain, validations)
 
     def run_multiple_tests(self, context, request, identifier, tests):
         for test in tests:

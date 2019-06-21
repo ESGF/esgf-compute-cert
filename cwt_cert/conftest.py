@@ -24,6 +24,8 @@ MARKERS = [
 class Context(object):
     def __init__(self, config):
         self.config = config
+        self.storage = {}
+
         self.data_inputs = {}
         self.validation_result = {}
 
@@ -70,39 +72,19 @@ class Context(object):
 
         return client
 
-    def set_data_inputs(self, request, name, variables, domain, operation, **kwargs):
-        client = self.get_client()
+    def set_extra(self, request, key, name, value):
+        nodeid = request.node._nodeid
 
-        variable, domain, operation = client.prepare_data_inputs(operation, variables, domain)
-
-        if request.node._nodeid in self.data_inputs:
-            self.data_inputs[request.node._nodeid][name] = {
-                'variable': variable,
-                'domain': domain,
-                'operation': operation,
-            }
+        if nodeid not in self.storage:
+            node = self.storage[nodeid] = {}
         else:
-            self.data_inputs[request.node._nodeid] = {
-                name: {
-                    'variable': variable,
-                    'domain': domain,
-                    'operation': operation,
-                }
-            }
+            node = self.storage[nodeid]
 
-    def set_validation_result(self, request, name, validation_name, result):
-        if request.node._nodeid in self.validation_result:
-            if name in self.validation_result[request.node._nodeid]:
-                self.validation_result[request.node._nodeid][name][validation_name] = result
-            else:
-                self.validation_result[request.node._nodeid][name] = {
-                    validation_name: result
-                }
+        if key in node:
+            node[key].update({name: value})
         else:
-            self.validation_result[request.node._nodeid] = {
-                name: {
-                    validation_name: result,
-                }
+            node[key] = {
+                name: value
             }
 
 
@@ -136,6 +118,9 @@ class CWTCertificationReport(object):
                 'stderr': str(rep.capstderr),
                 'duration': rep.duration,
             }
+
+            if rep.nodeid in self._context.storage:
+                self.tests[rep.nodeid].update(self._context.storage[rep.nodeid])
 
             if rep.nodeid in self._context.data_inputs:
                 self.tests[rep.nodeid]['data_inputs'] = self._context.data_inputs[rep.nodeid]
