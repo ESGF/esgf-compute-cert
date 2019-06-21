@@ -27,6 +27,10 @@ class Context(object):
         self.data_inputs = {}
 
     @property
+    def verify(self):
+        return self.config.getoption('--skip-verify')
+
+    @property
     def host(self):
         return self.config.getoption('--host')
 
@@ -56,12 +60,12 @@ class Context(object):
         return '{!s}.{!s}'.format(self.module, operation)
 
     def get_client(self):
-        client = cwt.WPSClient(self.host)
+        client = cwt.WPSClient(self.host, verify=self.verify)
 
         return client
 
     def get_client_token(self):
-        client = cwt.WPSClient(self.host, api_key=self.token)
+        client = cwt.WPSClient(self.host, api_key=self.token, verify=self.verify)
 
         return client
 
@@ -131,6 +135,8 @@ class CWTCertificationReport(object):
 
 def pytest_addoption(parser):
     group = parser.getgroup('cwt certification', 'cwt certification')
+
+    group.addoption('--skip-verify', help='verify servers TLS certificate', action='store_false')
 
     group.addoption('--host', help='target host to run tests on')
 
