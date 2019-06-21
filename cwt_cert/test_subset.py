@@ -19,9 +19,9 @@ class TestSubset(test_base.TestBase):
             'domain': {
                 'time': slice(50, 100),
             },
-            'validations': {
-                'shape': (50, 19, 90, 144)
-            }
+            'validations': [
+                test_base.validate_axes,
+            ]
         },
         {
             'variable': 'ta',
@@ -31,9 +31,9 @@ class TestSubset(test_base.TestBase):
             'domain': {
                 'time': (2144.0, 3116.5),
             },
-            'validations': {
-                'shape': (32, 19, 90, 144)
-            }
+            'validations': [
+                test_base.validate_axes,
+            ]
         },
         {
             'variable': 'ta',
@@ -43,24 +43,23 @@ class TestSubset(test_base.TestBase):
             'domain': {
                 'time': ('1854-1-16 12:0:0.0', '1854-12-16 12:0:0.0'),
             },
-            'validations': {
-                'shape': (12, 19, 90, 144)
-            }
+            'validations': [
+                test_base.validate_axes,
+            ]
         },
     ]
 
     performance = {
-        'variable': 'ta',
+        'variable': 'clt',
         'files': [
-            test_base.TA[0],
+            test_base.CLT[0],
         ],
         'domain': {
             'lat': (-45, 45),
             'lon': (0, 180),
             'time': (10000, 11000),
-            'plev': (40000, 20000),
         },
-        'validations': {
-            'shape': (33, 4, 46, 72)
-        }
+        'validations': [
+            test_base.validate_axes,
+        ]
     }

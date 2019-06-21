@@ -17,9 +17,9 @@ class TestAggregate(test_base.TestBase):
             'domain': {
                 'time': slice(300, 912),
             },
-            'validations': {
-                'shape': (612, 19, 90, 144)
-            }
+            'validations': [
+                test_base.validate_axes,
+            ]
         },
         {
             'variable': 'ta',
@@ -27,9 +27,9 @@ class TestAggregate(test_base.TestBase):
             'domain': {
                 'time': (2144.0, 25838.5),
             },
-            'validations': {
-                'shape': (779, 19, 90, 144)
-            }
+            'validations': [
+                test_base.validate_axes,
+            ]
         },
         {
             'variable': 'ta',
@@ -37,9 +37,9 @@ class TestAggregate(test_base.TestBase):
             'domain': {
                 'time': ('1854-1-16 12:0:0.0', '1910-12-16 12:0:0.0'),
             },
-            'validations': {
-                'shape': (684, 19, 90, 144)
-            }
+            'validations': [
+                test_base.validate_axes,
+            ]
         },
     ]
 
@@ -47,7 +47,7 @@ class TestAggregate(test_base.TestBase):
         'variable': 'clt',
         'files': test_base.CLT,
         'domain': None,
-        'validations': {
-            'shape': (1812, 90, 144),
-        }
+        'validations': [
+            test_base.validate_axes,
+        ]
     }

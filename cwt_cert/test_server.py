@@ -14,47 +14,51 @@ def test_stress(context, request):
         {
             'identifier': 'subset',
             'variable': 'clt',
-            'files': test_base.CLT[0:1],
+            'files': [
+                test_base.CLT[0]
+            ],
             'domain': {
                 'time': (1000, 10000),
                 'lat': (-45, 45),
                 'lon': (0, 180),
             },
-            'validations': {
-                'shape': (296, 46, 72),
-            },
+            'validations': [
+                test_base.validate_axes,
+            ]
         },
         {
             'identifier': 'subset',
             'variable': 'ta',
-            'files': test_base.TA[0:1],
+            'files': [
+                test_base.TA[0]
+            ],
             'domain': {
                 'time': (1000, 10000),
                 'lat': (-45, 45),
                 'lon': (0, 180),
                 'plev': (50000, 10000),
             },
-            'validations': {
-                'shape': (296, 7, 46, 72),
-            },
+            'validations': [
+                test_base.validate_axes,
+            ]
         },
         {
             'identifier': 'aggregate',
             'variable': 'tas',
             'files': test_base.TAS,
             'domain': None,
-            'validations': {
-                'shape': (1980, 90, 144),
-            },
+            'validations': [
+                test_base.validate_axes,
+            ]
         },
         {
             'identifier': 'aggregate',
             'variable': 'clt',
             'files': test_base.CLT,
             'domain': None,
-            'validations': {
-                'shape': (1812, 90, 144),
-            },
+            'validations': [
+                test_base.validate_axes,
+            ]
         },
     ]
 
@@ -70,7 +74,8 @@ def test_stress(context, request):
     for item in tests:
         assert item['process'].wait(20*60)
 
-        base.run_validations(item['process'].output, item['validations'])
+        for validation in item['validations']:
+            validation(context, item['files'], item['variable'], item['domain'], item['process'].output)
 
 
 @pytest.mark.metrics
