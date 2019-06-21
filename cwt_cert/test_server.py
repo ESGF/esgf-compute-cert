@@ -12,6 +12,7 @@ from cwt_cert import test_base
 def test_stress(context, request):
     tests = [
         {
+            'name': 'stress-subset-1',
             'identifier': 'subset',
             'variable': 'clt',
             'files': [
@@ -27,6 +28,7 @@ def test_stress(context, request):
             ]
         },
         {
+            'name': 'stress-subset-2',
             'identifier': 'subset',
             'variable': 'ta',
             'files': [
@@ -43,6 +45,7 @@ def test_stress(context, request):
             ]
         },
         {
+            'name': 'stress-aggregate-1',
             'identifier': 'aggregate',
             'variable': 'tas',
             'files': test_base.TAS,
@@ -52,6 +55,7 @@ def test_stress(context, request):
             ]
         },
         {
+            'name': 'stress-aggregate-2',
             'identifier': 'aggregate',
             'variable': 'clt',
             'files': test_base.CLT,
@@ -75,7 +79,12 @@ def test_stress(context, request):
         assert item['process'].wait(20*60)
 
         for validation in item['validations']:
-            validation(context, item['files'], item['variable'], item['domain'], item['process'].output)
+            try:
+                validation(context, item['files'], item['variable'], item['domain'], item['process'].output)
+            except test_base.ValidationError as e:
+                context.set_validation_result(request, item['name'], validation.__name__, str(e))
+            else:
+                context.set_validation_result(request, item['name'], validation.__name__, 'success')
 
 
 @pytest.mark.metrics

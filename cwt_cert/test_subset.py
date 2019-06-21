@@ -12,6 +12,7 @@ class TestSubset(test_base.TestBase):
 
     api_compliance = [
         {
+            'name': 'api-compliance-indices',
             'variable': 'ta',
             'files': [
                 test_base.TA[0],
@@ -25,6 +26,7 @@ class TestSubset(test_base.TestBase):
             ]
         },
         {
+            'name': 'api-compliance-values',
             'variable': 'ta',
             'files': [
                 test_base.TA[0],
@@ -38,6 +40,7 @@ class TestSubset(test_base.TestBase):
             ]
         },
         {
+            'name': 'api-compliance-values-timestamps',
             'variable': 'ta',
             'files': [
                 test_base.TA[0],
@@ -53,6 +56,7 @@ class TestSubset(test_base.TestBase):
     ]
 
     performance = {
+        'name': 'performance',
         'variable': 'clt',
         'files': [
             test_base.CLT[0],

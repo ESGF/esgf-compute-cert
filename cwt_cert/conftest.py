@@ -25,6 +25,7 @@ class Context(object):
     def __init__(self, config):
         self.config = config
         self.data_inputs = {}
+        self.validation_result = {}
 
     @property
     def verify(self):
@@ -69,15 +70,40 @@ class Context(object):
 
         return client
 
-    def set_data_inputs(self, request, variables, domain, operation, **kwargs):
+    def set_data_inputs(self, request, name, variables, domain, operation, **kwargs):
         client = self.get_client()
 
-        data_inputs = client.prepare_data_inputs(operation, variables, domain)
+        variable, domain, operation = client.prepare_data_inputs(operation, variables, domain)
 
         if request.node._nodeid in self.data_inputs:
-            self.data_inputs[request.node._nodeid].append(data_inputs)
+            self.data_inputs[request.node._nodeid][name] = {
+                'variable': variable,
+                'domain': domain,
+                'operation': operation,
+            }
         else:
-            self.data_inputs[request.node._nodeid] = [data_inputs]
+            self.data_inputs[request.node._nodeid] = {
+                name: {
+                    'variable': variable,
+                    'domain': domain,
+                    'operation': operation,
+                }
+            }
+
+    def set_validation_result(self, request, name, validation_name, result):
+        if request.node._nodeid in self.validation_result:
+            if name in self.validation_result[request.node._nodeid]:
+                self.validation_result[request.node._nodeid][name][validation_name] = result
+            else:
+                self.validation_result[request.node._nodeid][name] = {
+                    validation_name: result
+                }
+        else:
+            self.validation_result[request.node._nodeid] = {
+                name: {
+                    validation_name: result,
+                }
+            }
 
 
 class CWTCertificationReport(object):
@@ -113,6 +139,9 @@ class CWTCertificationReport(object):
 
             if rep.nodeid in self._context.data_inputs:
                 self.tests[rep.nodeid]['data_inputs'] = self._context.data_inputs[rep.nodeid]
+
+            if rep.nodeid in self._context.validation_result:
+                self.tests[rep.nodeid]['validation_result'] = self._context.validation_result[rep.nodeid]
 
     def pytest_sessionstart(self, session):
         if self._context.host is None:

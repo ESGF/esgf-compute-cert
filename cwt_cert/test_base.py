@@ -41,6 +41,11 @@ CLT = [
     'https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_195101-200012.nc',
 ]
 
+
+class ValidationError(Exception):
+    def __init__(self, fmt, *args, **kwargs):
+        super(ValidationError, self).__init__(fmt.format(*args, **kwargs))
+
 def default_sampling(samples, vars, domain):
     sample_data = []
 
@@ -56,37 +61,41 @@ def default_sampling(samples, vars, domain):
                 sample_data.append(data)
 
         if data is None:
-            raise Exception('Did not find sample time={!r}'.format(x))
+            raise ValidationError('Did not find sample in source files time={!r}', x)
 
     return sample_data
 
 def validate_data(context, files, variable, domain, output, sample_data=None):
-    domain.pop('time')
+    domain.pop('time', None)
 
-    with contextlib.ExitStack() as stack:
-        handles = [stack.enter_context(cdms2.open(x)) for x in files]
+    try:
+        with contextlib.ExitStack() as stack:
+            handles = [stack.enter_context(cdms2.open(x)) for x in files]
 
-        vars = [x[variable] for x in handles]
+            vars = [x[variable] for x in handles]
 
-        output_handle = stack.enter_context(cdms2.open(output.uri))
+            output_handle = stack.enter_context(cdms2.open(output.uri))
 
-        output_var = output_handle[output.var_name]
+            output_var = output_handle[output.var_name]
 
-        comp_time = output_var.getTime().asComponentTime()
+            comp_time = output_var.getTime().asComponentTime()
 
-        sample_size = int(len(comp_time)*0.10)
+            sample_size = int(len(comp_time)*0.10)
 
-        samples = random.sample(comp_time, sample_size)
+            samples = random.sample(comp_time, sample_size)
 
-        if sample_data is None:
-            src_samples = default_sampling(samples, vars, domain)
-        else:
-            src_samples = sample_data(samples, vars, domain)
+            if sample_data is None:
+                src_samples = default_sampling(samples, vars, domain)
+            else:
+                src_samples = sample_data(samples, vars, domain)
 
-        output_samples = [output_var(time=x) for x in samples]
+            output_samples = [output_var(time=x) for x in samples]
 
-        for x, y in zip(src_samples, output_samples):
-            assert np.all(x == y)
+            for x, y in zip(src_samples, output_samples):
+                if not np.all(x == y):
+                    raise ValidationError('Data sample time={!r} did not match between source and output', x.getTime().asComponentTime()[0])
+    except cdms2.CDMSError as e:
+        raise ValidationError('Could not open file {!r}', e)
 
 def build_time_axis(axis_id, vars):
     axis_data = []
@@ -113,48 +122,53 @@ def build_time_axis(axis_id, vars):
     return cdms2.MV2.axisConcatenate(axis_data, id=axis_id, attributes=attributes)
 
 def validate_axes(context, files, variable, domain, output):
-    with contextlib.ExitStack() as stack:
-        handles = [stack.enter_context(cdms2.open(x)) for x in files]
+    try:
+        with contextlib.ExitStack() as stack:
+            handles = [stack.enter_context(cdms2.open(x)) for x in files]
 
-        vars = [x[variable] for x in handles]
+            vars = [x[variable] for x in handles]
 
-        axes = []
+            axes = []
 
-        for axis in vars[0].getAxisList():
-            if axis.isTime():
-                axis_data = build_time_axis(axis.id, vars)
-            else:
-                axis_data = axis.clone()
-
-            try:
-                dim = domain.get(axis.id, None)
-            except AttributeError:
-                dim = None
-
-            if dim is None:
-                axes.append(axis_data)
-            elif isinstance(dim, slice):
-                axes.append(axis_data.subAxis(dim.start, dim.stop, dim.step or 1))
-            elif isinstance(dim, (list, tuple)):
-                mapped = axis_data.mapInterval((dim[0], dim[1]))
+            for axis in vars[0].getAxisList():
+                if axis.isTime():
+                    axis_data = build_time_axis(axis.id, vars)
+                else:
+                    axis_data = axis.clone()
 
                 try:
-                    step = dim[2]
-                except IndexError:
-                    step = 1
+                    dim = domain.get(axis.id, None)
+                except AttributeError:
+                    dim = None
 
-                axes.append(axis_data.subAxis(mapped[0], mapped[1], step or 1))
+                if dim is None:
+                    axes.append(axis_data)
+                elif isinstance(dim, slice):
+                    axes.append(axis_data.subAxis(dim.start, dim.stop, dim.step or 1))
+                elif isinstance(dim, (list, tuple)):
+                    mapped = axis_data.mapInterval((dim[0], dim[1]))
 
-    with cdms2.open(output.uri) as remote:
-        output_shape = remote[output.var_name].shape
+                    try:
+                        step = dim[2]
+                    except IndexError:
+                        step = 1
 
-        output_axes = [x.clone()[:] for x in remote[output.var_name].getAxisList()]
+                    axes.append(axis_data.subAxis(mapped[0], mapped[1], step or 1))
+
+            remote = staks.enter_context(cdms2.open(output.uri))
+
+            output_shape = remote[output.var_name].shape
+
+            output_axes = [x.clone()[:] for x in remote[output.var_name].getAxisList()]
+    except cdms2.CDMSError as e:
+        raise ValidationError('Could not open file {!r}', e)
 
     for x, y in zip(axes, output_axes):
-        assert np.all(x == y)
+        if not np.all(x == y):
+            raise ValidationError('Axis {!r} source {!r} did not match output {!r}', x.id, x.shape, y.shape)
 
 class TestBase(object):
-    def execute(self, context, request, client, identifier, files, variable, domain, **kwargs):
+    def execute(self, context, request, client, identifier, name, files, variable, domain, **kwargs):
         identifier = context.format_identifier(identifier)
 
         process = client.process_by_name(identifier)
@@ -167,19 +181,24 @@ class TestBase(object):
 
         client.execute(process, inputs, domain)
 
-        context.set_data_inputs(request, inputs, domain, process)
+        context.set_data_inputs(request, name, inputs, domain, process)
 
         return process
 
-    def run_test(self, context, request, identifier, files, variable, domain, validations):
+    def run_test(self, context, request, identifier, name, files, variable, domain, validations):
         client = context.get_client_token()
 
-        process = self.execute(context, request, client, identifier, files, variable, domain)
+        process = self.execute(context, request, client, identifier, name, files, variable, domain)
 
         assert process.wait(timeout=20*60)
 
         for validation in validations:
-            validation(context, files, variable, domain, process.output)
+            try:
+                validation(context, files, variable, domain, process.output)
+            except ValidationError as e:
+                context.set_validation_result(request, name, validation.__name__, str(e))
+            else:
+                context.set_validation_result(request, name, validation.__name__, 'success')
 
     def run_multiple_tests(self, context, request, identifier, tests):
         for test in tests:
