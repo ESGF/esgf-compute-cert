@@ -19,6 +19,7 @@ class TestAggregate(test_base.TestBase):
             },
             'validations': [
                 test_base.validate_axes,
+                test_base.validate_data,
             ]
         },
         {
@@ -29,6 +30,7 @@ class TestAggregate(test_base.TestBase):
             },
             'validations': [
                 test_base.validate_axes,
+                test_base.validate_data,
             ]
         },
         {
@@ -39,6 +41,7 @@ class TestAggregate(test_base.TestBase):
             },
             'validations': [
                 test_base.validate_axes,
+                test_base.validate_data,
             ]
         },
     ]

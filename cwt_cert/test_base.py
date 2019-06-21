@@ -2,8 +2,9 @@
 
 # flake8: noqa: E501
 
-from builtins import object
 import contextlib
+import random
+from builtins import object
 from collections import OrderedDict
 
 import cdms2
@@ -40,6 +41,52 @@ CLT = [
     'https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_195101-200012.nc',
 ]
 
+def default_sampling(samples, vars, domain):
+    sample_data = []
+
+    for x in samples:
+        data = None
+
+        for y in vars:
+            try:
+                data = y(time=x, **domain)
+            except cdms2.CDMSError:
+                continue
+            else:
+                sample_data.append(data)
+
+        if data is None:
+            raise Exception('Did not find sample time={!r}'.format(x))
+
+    return sample_data
+
+def validate_data(context, files, variable, domain, output, sample_data=None):
+    domain.pop('time')
+
+    with contextlib.ExitStack() as stack:
+        handles = [stack.enter_context(cdms2.open(x)) for x in files]
+
+        vars = [x[variable] for x in handles]
+
+        output_handle = stack.enter_context(cdms2.open(output.uri))
+
+        output_var = output_handle[output.var_name]
+
+        comp_time = output_var.getTime().asComponentTime()
+
+        sample_size = int(len(comp_time)*0.10)
+
+        samples = random.sample(comp_time, sample_size)
+
+        if sample_data is None:
+            src_samples = default_sampling(samples, vars, domain)
+        else:
+            src_samples = sample_data(samples, vars, domain)
+
+        output_samples = [output_var(time=x) for x in samples]
+
+        for x, y in zip(src_samples, output_samples):
+            assert np.all(x == y)
 
 def build_time_axis(axis_id, vars):
     axis_data = []
