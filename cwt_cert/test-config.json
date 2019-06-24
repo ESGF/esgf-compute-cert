@@ -1,0 +1,18 @@
+{
+  "operators": {
+    "subset": {
+      "CDAT": {
+        "version": [
+          "1.0.0"
+        ]
+      }
+    },
+    "aggregate": {
+      "CDAT": {
+        "version": [
+          "1.0.0"
+        ]
+      }
+    }
+  }
+}
