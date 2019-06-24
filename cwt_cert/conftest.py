@@ -1,7 +1,8 @@
-from builtins import str
-from builtins import object
 import collections
 import json
+import os
+from builtins import str
+from builtins import object
 from functools import partial
 from uuid import uuid4
 
@@ -116,14 +117,20 @@ class CWTCertificationPlugin(object):
 
         self.test_output = collections.OrderedDict()
 
+    @staticmethod
+    def open_file(uri):
+        pass
+
     @classmethod
     def from_config(cls, config):
-        test_config_file = 'certified-sample.json'
+        install_path = os.path.dirname(__file__)
+
+        test_config_file = os.path.join(install_path, 'certified-sample.json')
 
         with open(test_config_file) as infile:
             test_config = decoder(infile)
 
-        test_source_file = 'sources.json'
+        test_source_file = os.path.join(install_path, 'sources.json')
 
         with open(test_source_file) as infile:
             test_config.update(decoder(infile))
