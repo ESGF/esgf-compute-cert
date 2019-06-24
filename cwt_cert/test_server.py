@@ -28,11 +28,13 @@ def test_stress(context, request):
 
         params = test.get('parameters', {})
 
+        domain = params.pop('domain', None)
+
         client.execute(process, inputs, **params)
 
         processing[var_name] = process
 
-        variable, domain, operation = client.prepare_data_inputs(process, inputs, **params)
+        variable, domain, operation = client.prepare_data_inputs(process, inputs, domain, **params)
 
         data_inputs = {
             'variable': variable,
