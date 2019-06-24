@@ -2,6 +2,8 @@ from builtins import str
 from builtins import object
 import collections
 import json
+from functools import partial
+from uuid import uuid4
 
 import cwt
 import pytest
@@ -16,18 +18,34 @@ MARKERS = [
     'security: mark a test as a security test.',
     'operators: mark a test as an operators test.',
     'server: mark a test as a server test.',
-    'aggregate: mark a test as an aggregate test.',
-    'subset: mark a test as a subset test.',
 ]
 
 
-class Context(object):
-    def __init__(self, config):
-        self.config = config
-        self.storage = {}
+def default(o):
+    return o
 
-        self.data_inputs = {}
-        self.validation_result = {}
+
+def object_hook(o):
+    if 'domain' in o:
+        domain = o['domain']
+
+        domain['id'] = str(uuid4())
+
+        o = {'domain': cwt.Domain.from_dict(domain)}
+
+    return o
+
+
+encoder = partial(json.dump, default=default)
+
+decoder = partial(json.load, object_hook=object_hook)
+
+
+class Context(object):
+    def __init__(self, config, test_config):
+        self.config = config
+        self.test_config = test_config
+        self.storage = {}
 
     @property
     def verify(self):
@@ -88,21 +106,46 @@ class Context(object):
             }
 
 
-class CWTCertificationReport(object):
-    def __init__(self, config):
+class CWTCertificationPlugin(object):
+    def __init__(self, config, test_config):
         self.config = config
 
-        self._context = Context(config)
+        self.test_config = test_config
 
-        self.tests = collections.OrderedDict()
+        self._context = Context(config, test_config)
+
+        self.test_output = collections.OrderedDict()
 
     @classmethod
     def from_config(cls, config):
-        return cls(config)
+        test_config_file = 'certified-sample.json'
+
+        with open(test_config_file) as infile:
+            test_config = decoder(infile)
+
+        test_source_file = 'sources.json'
+
+        with open(test_source_file) as infile:
+            test_config.update(decoder(infile))
+
+        return cls(config, test_config)
 
     @pytest.fixture(scope='session')
     def context(self, request):
         return self._context
+
+    def pytest_generate_tests(self, metafunc):
+        if ('module' in metafunc.fixturenames and
+                'op' in metafunc.fixturenames and
+                'version' in metafunc.fixturenames):
+            parameters = []
+
+            for op_name, op_val in self.test_config['operators'].items():
+                for mod_name, mod_val in op_val.items():
+                    for version in mod_val['version']:
+                        parameters.append((mod_name, op_name, version))
+
+            metafunc.parametrize(('module', 'op', 'version'), parameters)
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_makereport(self, item, call):
@@ -111,7 +154,7 @@ class CWTCertificationReport(object):
         rep = outcome.get_result()
 
         if rep.when == 'call':
-            self.tests[rep.nodeid] = {
+            self.test_output[rep.nodeid] = {
                 'outcome': rep.outcome,
                 'longrepr': str(rep.longrepr),
                 'stdout': str(rep.capstdout),
@@ -120,13 +163,7 @@ class CWTCertificationReport(object):
             }
 
             if rep.nodeid in self._context.storage:
-                self.tests[rep.nodeid].update(self._context.storage[rep.nodeid])
-
-            if rep.nodeid in self._context.data_inputs:
-                self.tests[rep.nodeid]['data_inputs'] = self._context.data_inputs[rep.nodeid]
-
-            if rep.nodeid in self._context.validation_result:
-                self.tests[rep.nodeid]['validation_result'] = self._context.validation_result[rep.nodeid]
+                self.test_output[rep.nodeid].update(self._context.storage[rep.nodeid])
 
     def pytest_sessionstart(self, session):
         if self._context.host is None:
@@ -139,20 +176,16 @@ class CWTCertificationReport(object):
         json_report_file = self.config.getoption('--json-report-file', None)
 
         if json_report_file is not None:
-            report = {
-                'tests': self.tests,
-            }
-
             with open(json_report_file, 'w') as outfile:
-                json.dump(report, outfile, indent=True)
+                json.dump(self.test_output, outfile, indent=True)
 
 
 def pytest_addoption(parser):
     group = parser.getgroup('cwt certification', 'cwt certification')
 
-    group.addoption('--skip-verify', help='verify servers TLS certificate', action='store_false')
-
     group.addoption('--host', help='target host to run tests on')
+
+    group.addoption('--skip-verify', help='verify servers TLS certificate', action='store_false')
 
     group.addoption('--token', help='token to be used for api access')
 
@@ -165,7 +198,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    plugin = CWTCertificationReport.from_config(config)
+    plugin = CWTCertificationPlugin.from_config(config)
 
     config._cert_report = plugin
 

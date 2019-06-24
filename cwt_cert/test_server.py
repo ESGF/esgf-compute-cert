@@ -4,80 +4,49 @@ import pytest
 from jsonschema import validate
 
 from cwt_cert import metrics_schema
-from cwt_cert import test_base
+from cwt_cert import utils
 
 
 @pytest.mark.stress
 @pytest.mark.server
 def test_stress(context, request):
-    tests = [
-        {
-            'name': 'stress-subset-1',
-            'identifier': 'subset',
-            'variable': 'clt',
-            'files': [
-                test_base.CLT[0]
-            ],
-            'domain': {
-                'time': (1000, 10000),
-                'lat': (-45, 45),
-                'lon': (0, 180),
-            },
-            'validations': [
-                test_base.validate_axes,
-            ]
-        },
-        {
-            'name': 'stress-subset-2',
-            'identifier': 'subset',
-            'variable': 'ta',
-            'files': [
-                test_base.TA[0]
-            ],
-            'domain': {
-                'time': (1000, 10000),
-                'lat': (-45, 45),
-                'lon': (0, 180),
-                'plev': (50000, 10000),
-            },
-            'validations': [
-                test_base.validate_axes,
-            ]
-        },
-        {
-            'name': 'stress-aggregate-1',
-            'identifier': 'aggregate',
-            'variable': 'tas',
-            'files': test_base.TAS,
-            'domain': None,
-            'validations': [
-                test_base.validate_axes,
-            ]
-        },
-        {
-            'name': 'stress-aggregate-2',
-            'identifier': 'aggregate',
-            'variable': 'clt',
-            'files': test_base.CLT,
-            'domain': None,
-            'validations': [
-                test_base.validate_axes,
-            ]
-        },
-    ]
-
-    base = test_base.TestBase()
-
     client = context.get_client_token()
 
-    for item in tests:
-        process = base.execute(context, request, client, **item)
+    try:
+        config = context.test_config['stress']
+    except KeyError as e:
+        raise Exception('Missing configuration key {!r} in performance'.format(e))
 
-        item['process'] = process
+    processing = {}
 
-    for item in tests:
-        base.validate(context, request, item['process'], item['name'], item['files'], item['variable'], item['domain'],
-                      item['validations'])
+    for test in config:
+        var_name = test['variable']
+
+        inputs = [cwt.Variable(x, var_name) for x in test['inputs']]
+
+        process = client.processes('.*\\.{!s}'.format(test['op']))[0]
+
+        params = test.get('parameters', {})
+
+        client.execute(process, inputs, **params)
+
+        processing[var_name] = process
+
+        variable, domain, operation = client.prepare_data_inputs(process, inputs, **params)
+
+        data_inputs = {
+            'variable': variable,
+            'domain': domain,
+            'operation': operation,
+        }
+
+        context.set_extra(request, 'data_inputs', var_name, data_inputs)
+
+    for var_name, process in processing.items():
+        with utils.Timing() as timing:
+            assert process.wait(20 * 60)
+
+        context.set_extra(request, 'timing', var_name, timing.elapsed)
 
 
 @pytest.mark.metrics
@@ -91,7 +60,7 @@ def test_metrics(context, request):
 
     client.execute(process)
 
-    with test_base.Timing() as timing:
+    with utils.Timing() as timing:
         assert process.wait()
 
     context.set_extra(request, 'timing', 'metrics', timing.elapsed)
