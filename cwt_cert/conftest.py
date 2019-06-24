@@ -111,12 +111,12 @@ class CWTCertificationPlugin(object):
     def from_config(cls, config):
         install_path = os.path.dirname(__file__)
 
-        test_config_file = os.path.join(install_path, 'test-config.json')
+        test_config_file = os.path.join(install_path, 'config-test.json')
 
         with open(test_config_file) as infile:
             test_config = decoder(infile)
 
-        test_source_file = os.path.join(install_path, 'source-config.json')
+        test_source_file = os.path.join(install_path, 'config-source.json')
 
         with open(test_source_file) as infile:
             test_config.update(decoder(infile))
