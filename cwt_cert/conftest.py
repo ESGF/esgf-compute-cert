@@ -53,27 +53,24 @@ class Context(object):
         return self.config.getoption('--skip-verify')
 
     @property
-    def host(self):
-        return self.config.getoption('--host')
+    def url(self):
+        return self.config.getoption('--url')
 
     @property
     def token(self):
         return self.config.getoption('--token')
 
     @property
-    def metrics_identifier(self):
-        return '{!s}.metrics'.format(self.module_metrics)
-
-    def format_identifier(self, operation):
-        return '{!s}.{!s}'.format(self.module, operation)
+    def module(self):
+        return self.config.getoption('--module')
 
     def get_client(self):
-        client = cwt.WPSClient(self.host, verify=self.verify)
+        client = cwt.WPSClient(self.url, verify=self.verify)
 
         return client
 
     def get_client_token(self):
-        client = cwt.WPSClient(self.host, api_key=self.token, verify=self.verify)
+        client = cwt.WPSClient(self.url, api_key=self.token, verify=self.verify)
 
         return client
 
@@ -159,8 +156,11 @@ class CWTCertificationPlugin(object):
                 self.test_output[rep.nodeid].update(self._context.storage[rep.nodeid])
 
     def pytest_sessionstart(self, session):
-        if self._context.host is None:
-            raise pytest.UsageError('Missing required parameter --host')
+        if self._context.url is None:
+            raise pytest.UsageError('Missing required parameter --url')
+
+        if self._context.module is None:
+            raise pytest.UsageError('Missing required parameter --module')
 
     def pytest_sessionfinish(self, session, exitstatus):
         json_report_file = self.config.getoption('--json-report-file', None)
@@ -173,13 +173,15 @@ class CWTCertificationPlugin(object):
 def pytest_addoption(parser):
     group = parser.getgroup('cwt certification', 'cwt certification')
 
-    group.addoption('--host', help='target host to run tests on')
+    group.addoption('--url', help='URL to the WPS service')
 
-    group.addoption('--skip-verify', help='verify servers TLS certificate', action='store_false')
+    group.addoption('--module', help='Module to run server tests against')
 
-    group.addoption('--token', help='token to be used for api access')
+    group.addoption('--skip-verify', help='Skip verifying TLS certificate', action='store_false')
 
-    group.addoption('--json-report-file', help='path to store json report')
+    group.addoption('--token', help='Compute token to pass the service')
+
+    group.addoption('--json-report-file', help='Path to a file to write the report to')
 
 
 def pytest_configure(config):

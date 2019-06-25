@@ -24,7 +24,7 @@ def test_stress(context, request):
 
         inputs = [cwt.Variable(x, var_name) for x in test['inputs']]
 
-        process = client.processes('.*\\.{!s}'.format(test['op']))[0]
+        process = client.process_by_name('{!s}.{!s}'.format(context.module, test['op']))
 
         params = test.get('parameters', {})
 
@@ -56,7 +56,7 @@ def test_stress(context, request):
 def test_metrics(context, request):
     client = context.get_client_token()
 
-    process = client.process_by_name(context.metrics_identifier)
+    process = client.process_by_name('{!s}.metrics'.format(context.module))
 
     assert process is not None, 'Missing metrics operation'
 
@@ -77,7 +77,7 @@ def test_metrics(context, request):
 def test_security(context):
     client = context.get_client()
 
-    process = client.process_by_name(context.metrics_identifier)
+    process = client.process_by_name('{!s}.metrics'.format(context.module))
 
     assert process is not None, 'Missing metrics operation'
 
@@ -91,12 +91,12 @@ def test_security(context):
 def test_official_operators(context, request):
     client = context.get_client()
 
+    expected_values = ['{!s}.{!s}'.format(context.module, x) for x in context.test_config['operators'].keys()]
+
+    expected_values.append('{!s}.metrics'.format(context.module))
+
     found = set()
-    expected = set([
-        context.format_identifier('subset'),
-        context.format_identifier('aggregate'),
-        context.metrics_identifier,
-    ])
+    expected = set(expected_values)
 
     for identifier in expected:
         process = client.process_by_name(identifier)
