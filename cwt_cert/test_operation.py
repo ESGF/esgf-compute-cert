@@ -1,3 +1,5 @@
+import os
+
 import cwt
 import pytest
 
@@ -36,19 +38,29 @@ def test_api_compliance(context, request, module, op, version):
     except KeyError as e:
         raise Exception('Missing configuration key {!r} in api_compliance'.format(e))
 
-    inputs = [cwt.Variable(x, config['variable']) for x in config['inputs']]
-
-    params = config.get('parameters', {})
-
-    client = config.get_client_token()
-
     identifier = '{!s}.{!s}'.format(module, op)
 
-    process = client.process_by_name(identifier)
+    for test in config:
+        inputs = [cwt.Variable(x, test['variable']) for x in test['inputs']]
 
-    client.execute(process, inputs, **params)
+        params = test.get('parameters', {})
 
-    with utils.Timing() as timing:
-        assert process.wait(20 * 60)
+        client = context.get_client_token()
 
-    context.set_extra(request, 'timing', op, timing.elapsed)
+        process = client.process_by_name(identifier)
+
+        client.execute(process, inputs, **params)
+
+        with utils.Timing() as timing:
+            assert process.wait(20 * 60)
+
+        name = test.get('name', op)
+
+        context.set_extra(request, 'timing', name, timing.elapsed)
+
+        if context.output_dir is not None:
+            output_filename = '{!s}-{!s}-{!s}'.format(identifier, version, name)
+
+            output_path = os.path.join(context.output_dir, output_filename)
+
+            utils.download(process.output.uri.replace('dodsC', 'fileServer'), output_path)

@@ -1,8 +1,6 @@
 import collections
 import json
 import os
-from builtins import str
-from builtins import object
 from functools import partial
 from uuid import uuid4
 
@@ -47,6 +45,10 @@ class Context(object):
         self.config = config
         self.test_config = test_config
         self.storage = {}
+
+    @property
+    def output_dir(self):
+        return self.config.getoption('--output-dir')
 
     @property
     def verify(self):
@@ -162,6 +164,10 @@ class CWTCertificationPlugin(object):
         if self._context.module is None:
             raise pytest.UsageError('Missing required parameter --module')
 
+        if self._context.output_dir is not None:
+            if not os.path.exists(self._context.output_dir):
+                os.makedirs(self._context.output_dir)
+
     def pytest_sessionfinish(self, session, exitstatus):
         json_report_file = self.config.getoption('--json-report-file', None)
 
@@ -181,7 +187,9 @@ def pytest_addoption(parser):
 
     group.addoption('--token', help='Compute token to pass the service')
 
-    group.addoption('--json-report-file', help='Path to a file to write the report to')
+    group.addoption('--output-dir', help='Directory to write output data')
+
+    group.addoption('--json-report-file', help='File to write JSON formatted report')
 
 
 def pytest_configure(config):

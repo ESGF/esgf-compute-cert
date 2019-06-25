@@ -1,5 +1,17 @@
 import time
 
+import requests
+
+
+def download(uri, output_path):
+    res = requests.get(uri, stream=True)
+
+    res.raise_for_status()
+
+    with open(output_path, 'wb') as outfile:
+        for chunk in res.iter_content(chunk_size=8192):
+            outfile.write(chunk)
+
 
 class Timing(object):
     def __init__(self):

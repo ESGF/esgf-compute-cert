@@ -57,6 +57,7 @@
   "api_compliance": {
     "subset": [
       {
+        "name": "values",
         "inputs": [
           "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_185001-190012.nc"
         ],
@@ -68,6 +69,7 @@
         }
       },
       {
+        "name": "timestamps",
         "inputs": [
           "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_185001-190012.nc"
         ],
@@ -79,6 +81,7 @@
         }
       },
       {
+        "name": "indices",
         "inputs": [
           "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_185001-190012.nc"
         ],

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 import cwt
 import pytest
 from jsonschema import validate
