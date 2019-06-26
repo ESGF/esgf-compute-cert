@@ -87,7 +87,7 @@ def test_security(context):
         client.execute(process)
 
 
-@pytest.mark.operators
+@pytest.mark.official_operator
 @pytest.mark.server
 def test_official_operators(context, request):
     client = context.get_client()

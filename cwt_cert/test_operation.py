@@ -7,6 +7,7 @@ from cwt_cert import utils
 
 
 @pytest.mark.performance
+@pytest.mark.operator
 def test_performance(context, request, module, op, version):
     try:
         config = context.test_config['performance'][op]
@@ -32,6 +33,7 @@ def test_performance(context, request, module, op, version):
 
 
 @pytest.mark.api_compliance
+@pytest.mark.operator
 def test_api_compliance(context, request, module, op, version):
     try:
         config = context.test_config['api_compliance'][op]

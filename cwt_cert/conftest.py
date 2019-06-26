@@ -12,13 +12,14 @@ import requests
 pytest.register_assert_rewrite('cwt_cert.process_base')
 
 MARKERS = [
-    'stress: mark a test as a stress test.',
-    'performance: mark a test as a performance test.',
-    'api_compliance: mark a test as an api compliance test.',
-    'metrics: mark a test as a metrics test.',
-    'security: mark a test as a security test.',
-    'operators: mark a test as an operators test.',
-    'server: mark a test as a server test.',
+    'operators: filter operator tests (will run performance and api_compliance tests)',
+    'performance: filter operator performance tests',
+    'api_compliance: filter operator api compliance tests',
+    'server: filter server tests (will run stress, metrics, security and official_operator tests)',
+    'stress: filter server stress tests',
+    'metrics: filter server metrics test',
+    'security: filter server security test',
+    'official_operator: filter server official operator test',
 ]
 
 
@@ -145,6 +146,44 @@ class CWTCertificationPlugin(object):
     def context(self, request):
         return self._context
 
+    @property
+    def markers(self):
+        mod = []
+        op = []
+        ver = []
+
+        for op_name, op_val in self.test_config['operators'].items():
+            op.append(op_name)
+            for mod_name, mod_val in op_val.items():
+                mod.append(mod_name)
+                for version_val in mod_val['version']:
+                    ver.append(version_val.replace('.', '_'))
+
+        for x in list(set(mod)) + list(set(op)) + list(set(ver)):
+            if x in mod:
+                yield '{0!s}: filter {0!s} module tests'.format(x)
+            elif x in op:
+                yield '{0!s}: filter {0!s} operation tests'.format(x)
+            elif x in ver:
+                yield '{0!s}: filter {0!s} version tests'.format(x)
+            else:
+                yield '{0!s}: filter {0!s}'.format(x)
+
+    def pytest_collection_modifyitems(self, items, config):
+        for item in items:
+            if 'performance' in item.nodeid or 'api_compliance' in item.nodeid:
+                module = item.callspec.getparam('module')
+
+                op = item.callspec.getparam('op')
+
+                version = item.callspec.getparam('version')
+
+                item.add_marker(module)
+
+                item.add_marker(op)
+
+                item.add_marker(version.replace('.', '_'))
+
     def pytest_generate_tests(self, metafunc):
         if ('module' in metafunc.fixturenames and
                 'op' in metafunc.fixturenames and
@@ -221,6 +260,9 @@ def pytest_configure(config):
     config.pluginmanager.register(plugin)
 
     for marker in MARKERS:
+        config.addinivalue_line('markers', marker)
+
+    for marker in plugin.markers:
         config.addinivalue_line('markers', marker)
 
 
