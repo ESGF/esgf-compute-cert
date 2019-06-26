@@ -14,5 +14,114 @@
         ]
       }
     }
+  },
+  "stress": [
+    {
+      "op": "aggregate",
+      "inputs": [
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/tas/gn/v20181016/tas_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_185001-190012.nc",
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/tas/gn/v20181016/tas_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_190101-195012.nc",
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/tas/gn/v20181016/tas_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_195101-200012.nc",
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/tas/gn/v20181016/tas_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_200101-201412.nc"
+      ],
+      "variable": "tas"
+    },
+    {
+      "op": "aggregate",
+      "inputs": [
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/ta/gn/v20181016/ta_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_185001-190012.nc",
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/ta/gn/v20181016/ta_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_190101-195012.nc",
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/ta/gn/v20181016/ta_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_195101-200012.nc",
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/ta/gn/v20181016/ta_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_200101-201412.nc"
+      ],
+      "variable": "ta"
+    },
+    {
+      "op": "aggregate",
+      "inputs": [
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_185001-190012.nc",
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_190101-195012.nc",
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_195101-200012.nc"
+      ],
+      "variable": "clt"
+    }
+  ],
+  "performance": {
+    "subset": {
+      "inputs": [
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/tas/gn/v20181016/tas_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_185001-190012.nc"
+      ],
+      "variable": "tas",
+      "parameters": {
+        "domain": {
+          "time": {"start": "4150.5", "end": 11907.5, "crs": "values"},
+          "lat": {"start": "-45.0", "end": 45.0, "crs": "values"},
+          "lon": {"start": "90", "end": 270, "crs": "values"}
+        }
+      }
+    },
+    "aggregate": {
+      "inputs": [
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/tas/gn/v20181016/tas_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_185001-190012.nc",
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/tas/gn/v20181016/tas_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_190101-195012.nc",
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/tas/gn/v20181016/tas_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_195101-200012.nc",
+        "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/amip/r1i1p1f1/Amon/tas/gn/v20181016/tas_Amon_GISS-E2-1-G_amip_r1i1p1f1_gn_200101-201412.nc"
+      ],
+      "variable": "tas"
+    }
+  },
+  "api_compliance": {
+    "subset": [
+      {
+        "name": "values",
+        "inputs": [
+          "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_185001-190012.nc"
+        ],
+        "variable": "clt",
+        "parameters": {
+          "domain": {
+            "time": {"start": 4150.5, "end": 11907.5, "crs": "values"}
+          }
+        },
+        "validate": "https://github.com/ESGF/esgf-compute-cert/releases/download/data/CDAT.subset-1.0.0-values"
+      },
+      {
+        "name": "timestamps",
+        "inputs": [
+          "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_185001-190012.nc"
+        ],
+        "variable": "clt",
+        "parameters": {
+          "domain": {
+            "time": {"start": "1860-3-16 12:0:0.0", "end": "1890-10-16 12:0:0.0", "crs": "timestamps"}
+          }
+        },
+        "validate": "https://github.com/ESGF/esgf-compute-cert/releases/download/data/CDAT.subset-1.0.0-timestamps"
+      },
+      {
+        "name": "indices",
+        "inputs": [
+          "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_185001-190012.nc"
+        ],
+        "variable": "clt",
+        "parameters": {
+          "domain": {
+            "time": {"start": 300, "end": 550, "crs": "indices"}
+          }
+        },
+        "validate": "https://github.com/ESGF/esgf-compute-cert/releases/download/data/CDAT.subset-1.0.0-indices"
+      }
+    ],
+    "aggregate": [
+      {
+        "inputs": [
+          "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_185001-190012.nc",
+          "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_190101-195012.nc",
+          "https://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NASA-GISS/GISS-E2-1-G/1pctCO2/r1i1p1f1/Amon/clt/gn/v20180905/clt_Amon_GISS-E2-1-G_1pctCO2_r1i1p1f1_gn_195101-200012.nc"
+        ],
+        "variable": "clt",
+        "validate": "https://github.com/ESGF/esgf-compute-cert/releases/download/data/CDAT.aggregate-1.0.0-aggregate"
+      }
+    ]
   }
 }

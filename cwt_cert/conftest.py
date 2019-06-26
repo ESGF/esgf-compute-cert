@@ -1,11 +1,13 @@
 import collections
 import json
 import os
+import re
 from functools import partial
 from uuid import uuid4
 
 import cwt
 import pytest
+import requests
 
 pytest.register_assert_rewrite('cwt_cert.process_base')
 
@@ -35,9 +37,9 @@ def object_hook(o):
     return o
 
 
-encoder = partial(json.dump, default=default)
+encoder = partial(json.dumps, default=default)
 
-decoder = partial(json.load, object_hook=object_hook)
+decoder = partial(json.loads, object_hook=object_hook)
 
 
 class Context(object):
@@ -107,22 +109,35 @@ class CWTCertificationPlugin(object):
         self.test_output = collections.OrderedDict()
 
     @staticmethod
-    def open_file(uri):
-        pass
+    def read_file(uri):
+        if re.match('^http[s]?://.*', uri) is None:
+            with open(uri) as infile:
+                data = infile.read()
+        else:
+            res = requests.get(uri)
+
+            res.raise_for_status()
+
+            data = res.content
+
+        return data
 
     @classmethod
     def from_config(cls, config):
         install_path = os.path.dirname(__file__)
 
-        test_config_file = os.path.join(install_path, 'config-test.json')
+        test_config_path = os.path.join(install_path, 'config-test.json')
 
-        with open(test_config_file) as infile:
-            test_config = decoder(infile)
+        test_config_file = cls.read_file(test_config_path)
 
-        test_source_file = os.path.join(install_path, 'config-source.json')
+        test_config = decoder(test_config_file)
 
-        with open(test_source_file) as infile:
-            test_config.update(decoder(infile))
+        config_override_path = config.getoption('--config')
+
+        if config_override_path is not None:
+            config_override_file = cls.read_file(config_override_path)
+
+            test_config.update(decoder(config_override_file))
 
         return cls(config, test_config)
 
@@ -183,17 +198,19 @@ class CWTCertificationPlugin(object):
 def pytest_addoption(parser):
     group = parser.getgroup('cwt certification', 'cwt certification')
 
-    group.addoption('--url', help='URL to the WPS service')
+    group.addoption('--url', help='url of the WPS service to run certification on')
 
-    group.addoption('--module', help='Module to run server tests against')
+    group.addoption('--module', help='name of the module to use for server testing')
 
-    group.addoption('--skip-verify', help='Skip verifying TLS certificate', action='store_false')
+    group.addoption('--config', help='config file to override test configuration')
 
-    group.addoption('--token', help='Compute token to pass the service')
+    group.addoption('--skip-verify', help='skip tls verifying', action='store_false')
 
-    group.addoption('--output-dir', help='Directory to write output data')
+    group.addoption('--token', help='compute token')
 
-    group.addoption('--json-report-file', help='File to write JSON formatted report')
+    group.addoption('--output-dir', help='directory to write process outputs')
+
+    group.addoption('--json-report-file', help='file to write JSON report')
 
 
 def pytest_configure(config):
