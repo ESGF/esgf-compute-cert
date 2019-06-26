@@ -47,6 +47,10 @@ class Context(object):
         self.storage = {}
 
     @property
+    def install_dir(self):
+        return os.path.dirname(__file__)
+
+    @property
     def output_dir(self):
         return self.config.getoption('--output-dir')
 

@@ -64,3 +64,10 @@ def test_api_compliance(context, request, module, op, version):
             output_path = os.path.join(context.output_dir, output_filename)
 
             utils.download(process.output.uri.replace('dodsC', 'fileServer'), output_path)
+
+        validate_path = os.path.join(context.install_dir, os.path.basename(test['validate']))
+
+        if not os.path.exists(validate_path):
+            utils.download(test['validate'], validate_path)
+
+        utils.validate(validate_path, test['variable'], process.output)
