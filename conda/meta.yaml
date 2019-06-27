@@ -20,22 +20,20 @@ requirements:
     - python
 
   run:
-    - python
+    - python=3.7.0
     - pytest=4.5.0
     - nomkl=3.0
     - cdms2=3.1.2
     - libnetcdf=4.6.2
-    - esgf-compute-api={{ data.get('version') }}
+    - esgf-compute-api={{ environ.get('COMPUTE_API_VER') }}
     - jsonschema=3.0.1
 
 test:
   imports:
     - cwt_cert
     - cwt_cert.conftest
-    - cwt_cert.process_base
     - cwt_cert.test_server
-    - cwt_cert.test_subset
-    - cwt_cert.test_aggregate
+    - cwt_cert.test_operator
 
   commands:
     - cwt-cert -h

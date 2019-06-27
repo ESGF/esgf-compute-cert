@@ -1,5 +1,7 @@
 from setuptools import setup
 
+from cwt_cert._version import __version__
+
 setup(
     name='cwt-cert',
     description='Certification tool for Official ESGF Compute nodes',
@@ -9,7 +11,7 @@ setup(
     },
     author='Jason Boutte',
     author_email='boutte3@llnl.gov',
-    version='0.1.0',
+    version=__version__,
     url='https://github.com/ESGF/esgf-compute-cert',
     entry_points={
         'console_scripts': [
